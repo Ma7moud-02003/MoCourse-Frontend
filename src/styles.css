@@ -1,3 +1,22 @@
 /* You can add global styles to this file, and also import other style files */
 
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Vibes&display=swap');
 @import 'tailwindcss';
+
+body {
+  font-family: "Noto Sans Arabic", sans-serif;
+}
+.logo {
+   font-family: "Vibes", system-ui;
+
+}
+/* إخفاء Scrollbar لجميع المتصفحات مع الحفاظ على التمرير */
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
