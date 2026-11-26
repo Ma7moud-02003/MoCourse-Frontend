@@ -1,15 +1,20 @@
-<main class="shell">
-  <!-- Picture side: hidden on phones (see the css) -->
-  <aside class="art">
-    <img [src]="image()" alt="" />
-    <h2>{{ headline() }}</h2>
-    <p>{{ caption() }}</p>
+<!-- Two columns on a big screen, one column on a phone (md: = 800px, see styles.css) -->
+<main class="grid min-h-screen md:grid-cols-2">
+  <!-- Picture side: on phones it is only a small picture on top, the texts are hidden -->
+  <aside class="flex flex-col items-center justify-center px-5 pt-4 text-center md:bg-art md:p-8">
+    <img
+      [src]="image()"
+      alt=""
+      class="max-h-[190px] w-full rounded-[20px] object-cover md:max-h-[56vh] md:w-[min(440px,100%)] md:rounded-3xl md:object-contain"
+    />
+    <h2 class="mt-6 mb-2 hidden text-[26px] font-bold text-plum md:block">{{ headline() }}</h2>
+    <p class="hidden max-w-[360px] leading-[1.7] text-muted md:block">{{ caption() }}</p>
   </aside>
 
   <!-- Form side -->
-  <section class="panel">
-    <div class="box">
-      <div class="brand">
+  <section class="flex items-start justify-center px-5 pt-6 pb-8 md:items-center md:py-8">
+    <div class="w-full max-w-[400px]">
+      <div class="mb-7 flex items-center gap-2.5 text-[22px]">
         <img src="logo.svg" alt="" width="44" height="44" />
         <strong>MoCourse</strong>
       </div>
