@@ -1,12 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { LayOut } from './Instractor/components/lay-out/lay-out';
+
+// The root component. It only holds <router-outlet>:
+// the router puts the page of the current URL (login, register...) in that spot.
 @Component({
-  imports: [RouterOutlet],
   selector: 'app-root',
-  styleUrl: './app.css',
-  templateUrl: './app.html',
+  imports: [RouterOutlet],
+  template: '<router-outlet />',
 })
-export class App {
-  protected readonly title = signal('mocourse');
-}
+export class App {}

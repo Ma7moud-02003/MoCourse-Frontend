@@ -1,0 +1,60 @@
+<app-auth-shell
+  image="images/6-register.jpg"
+  headline="مكان واحد للمدرّس والطالب"
+  caption="اتعلّم من مدرّسين بتثق فيهم، أو اشرح اللي تعرفه وساعد غيرك."
+>
+  <h1>يلا نبدأ، أنشئ حسابك</h1>
+  <p class="sub">اختار أنت مين، وكمّل بياناتك في دقيقة.</p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (serverError()) {
+      <div class="alert" role="alert">{{ serverError() }}</div>
+    }
+
+    <!-- Student or instructor -->
+    <div class="roles" role="radiogroup" aria-label="نوع الحساب">
+      @for (r of roles; track r.value) {
+        <button type="button" class="role" role="radio"
+                [class.active]="form.controls.role.value === r.value"
+                [attr.aria-checked]="form.controls.role.value === r.value"
+                (click)="chooseRole(r.value)">
+          <strong>{{ r.label }}</strong>
+          <small>{{ r.hint }}</small>
+        </button>
+      }
+    </div>
+
+    <label class="field">
+      <span>الاسم</span>
+      <input type="text" formControlName="fullName" placeholder="محمد أحمد" autocomplete="name"
+             [class.invalid]="showError('fullName')" />
+      @if (showError('fullName')) {
+        <p class="error">اكتب اسمك.</p>
+      }
+    </label>
+
+    <label class="field">
+      <span>الإيميل</span>
+      <input type="email" formControlName="email" placeholder="you@example.com" autocomplete="email"
+             [class.invalid]="showError('email')" />
+      @if (showError('email')) {
+        <p class="error">اكتب إيميل صحيح.</p>
+      }
+    </label>
+
+    <label class="field">
+      <span>كلمة السر</span>
+      <input type="password" formControlName="password" placeholder="6 حروف على الأقل" autocomplete="new-password"
+             [class.invalid]="showError('password')" />
+      @if (showError('password')) {
+        <p class="error">كلمة السر لازم تكون 6 حروف أو أكتر.</p>
+      }
+    </label>
+
+    <button class="btn" type="submit" [disabled]="loading()">
+      {{ loading() ? 'ثانية واحدة...' : 'إنشاء الحساب' }}
+    </button>
+  </form>
+
+  <p class="switch">عندك حساب؟ <a routerLink="/login">سجّل دخولك</a></p>
+</app-auth-shell>
