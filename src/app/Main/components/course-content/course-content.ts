@@ -14,6 +14,7 @@ import { Course } from '../../Models/wizard.models';
 import { CoursesService } from '../../../core/services/Services/course';
 import { UserInfo } from '../../../core/services/Services/instractor-info';
 import { UserInfoModel } from '../../Models/user-info.model';
+import { CourseReviews } from '../course-reviews/course-reviews';
 const LEVEL_LABELS: Record<string, string> = {
   beginner: 'مبتدئ',
   intermediate: 'متوسط',
@@ -23,7 +24,7 @@ const LEVEL_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-course-header',
   standalone: true,
-  imports: [DecimalPipe,CommonModule,RouterModule],
+  imports: [DecimalPipe,CommonModule,RouterModule,CourseReviews],
   templateUrl: './course-content.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

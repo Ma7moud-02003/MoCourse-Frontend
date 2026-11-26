@@ -1,0 +1,134 @@
+<section dir="rtl" class="space-y-4 pt-6" aria-labelledby="reviews-title">
+  <div class="flex items-center justify-between">
+    <h3 id="reviews-title" class="text-base font-bold text-slate-900">
+      تقييمات الطلاب ({{ reviews().length }})
+    </h3>
+    @if (reviews().length) {
+      <span class="flex items-center gap-1 text-sm font-bold text-amber-500">
+        <i class="fa-solid fa-star text-xs"></i>
+        {{ average().toFixed(1) }}
+      </span>
+    }
+  </div>
+
+  @if (showForm()) {
+    <form
+      class="space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-xs"
+      (submit)="$event.preventDefault(); submit()"
+    >
+      <p class="text-sm font-semibold text-slate-700">
+        {{ editingId() === null ? 'أضف تقييمك' : 'عدّل تقييمك' }}
+      </p>
+
+      <div class="flex gap-1" role="radiogroup" aria-label="التقييم">
+        @for (n of stars; track n) {
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="rating() === n"
+            [attr.aria-label]="n + ' من 5'"
+            (click)="rating.set(n)"
+            class="cursor-pointer text-2xl"
+            [class.text-amber-400]="n <= rating()"
+            [class.text-slate-300]="n > rating()"
+          >
+            <i class="fa-solid fa-star"></i>
+          </button>
+        }
+      </div>
+
+      <textarea
+        rows="3"
+        [maxLength]="rules.commentMax"
+        [value]="comment()"
+        (input)="onCommentInput($event)"
+        placeholder="اكتب رأيك في الكورس (من 5 إلى 200 حرف)"
+        aria-label="تعليقك"
+        class="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-purple-500 focus:outline-none"
+      ></textarea>
+      <div class="text-xs text-slate-400">{{ commentLength() }} / {{ rules.commentMax }}</div>
+
+      @if (formError()) {
+        <p role="alert" class="text-sm font-semibold text-red-600">{{ formError() }}</p>
+      }
+
+      <div class="flex gap-2">
+        <button
+          type="submit"
+          [disabled]="saving()"
+          class="cursor-pointer rounded-xl bg-purple-600 px-5 py-2 text-sm font-bold text-white hover:bg-purple-700 disabled:opacity-60"
+        >
+          {{ editingId() === null ? 'نشر التقييم' : 'حفظ التعديل' }}
+        </button>
+        @if (editingId() !== null) {
+          <button
+            type="button"
+            (click)="cancelEdit()"
+            class="cursor-pointer rounded-xl border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700"
+          >
+            إلغاء
+          </button>
+        }
+      </div>
+    </form>
+  } @else if (formError()) {
+    <p role="alert" class="text-sm font-semibold text-red-600">{{ formError() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="text-sm text-slate-500">جاري تحميل التقييمات...</p>
+  } @else if (loadError()) {
+    <div class="text-sm text-slate-600">
+      تعذر تحميل التقييمات.
+      <button type="button" (click)="load()" class="cursor-pointer font-bold text-purple-600">
+        إعادة المحاولة
+      </button>
+    </div>
+  } @else if (!reviews().length) {
+    <p class="text-sm text-slate-500">لا توجد تقييمات لهذا الكورس بعد.</p>
+  } @else {
+    <ul class="space-y-3">
+      @for (r of reviews(); track r.id) {
+        <li class="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+          <div class="flex items-center gap-3">
+            @if (r.user.avatar) {
+              <img [src]="r.user.avatar" alt="" class="h-10 w-10 rounded-full object-cover" />
+            } @else {
+              <span
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600"
+              >
+                <i class="fa-solid fa-user"></i>
+              </span>
+            }
+            <div class="flex-1">
+              <div class="text-sm font-bold text-slate-900">{{ r.user.fullName }}</div>
+              <div class="text-xs text-slate-400">{{ formatDate(r.createdAt) }}</div>
+            </div>
+            <div class="flex items-center gap-0.5 text-xs" [attr.aria-label]="r.rateing + ' من 5'">
+              @for (n of stars; track n) {
+                <i
+                  class="fa-solid fa-star"
+                  [class.text-amber-400]="n <= r.rateing"
+                  [class.text-slate-200]="n > r.rateing"
+                ></i>
+              }
+            </div>
+          </div>
+          <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">
+            {{ r.comment }}
+          </p>
+          @if (canReview() && isMine(r)) {
+            <div class="mt-3 flex gap-4 text-xs font-bold">
+              <button type="button" (click)="startEdit(r)" class="cursor-pointer text-purple-600">
+                تعديل
+              </button>
+              <button type="button" (click)="remove(r)" class="cursor-pointer text-red-600">
+                حذف
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>
