@@ -3,58 +3,92 @@
   headline="مكان واحد للمدرّس والطالب"
   caption="اتعلّم من مدرّسين بتثق فيهم، أو اشرح اللي تعرفه وساعد غيرك."
 >
-  <h1>يلا نبدأ، أنشئ حسابك</h1>
-  <p class="sub">اختار أنت مين، وكمّل بياناتك في دقيقة.</p>
+  <h1 class="mb-1.5 text-[26px] font-bold">يلا نبدأ، أنشئ حسابك</h1>
+  <p class="mb-6 text-muted">اختار أنت مين، وكمّل بياناتك في دقيقة.</p>
 
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
     @if (serverError()) {
-      <div class="alert" role="alert">{{ serverError() }}</div>
+      <div role="alert" class="mb-[18px] rounded-xl bg-alert-bg px-3.5 py-3 text-sm text-alert-ink">
+        {{ serverError() }}
+      </div>
     }
 
-    <!-- Student or instructor -->
-    <div class="roles" role="radiogroup" aria-label="نوع الحساب">
+    <!-- Student or instructor: the chosen card gets a mint border and background -->
+    <div role="radiogroup" aria-label="نوع الحساب" class="mb-5 grid grid-cols-2 gap-3">
       @for (r of roles; track r.value) {
-        <button type="button" class="role" role="radio"
-                [class.active]="form.controls.role.value === r.value"
-                [attr.aria-checked]="form.controls.role.value === r.value"
-                (click)="chooseRole(r.value)">
+        <button
+          type="button"
+          role="radio"
+          [attr.aria-checked]="form.controls.role.value === r.value"
+          (click)="chooseRole(r.value)"
+          class="flex cursor-pointer flex-col gap-0.5 rounded-xl border-[1.5px] bg-white p-3 text-start text-ink"
+          [ngClass]="form.controls.role.value === r.value ? 'border-mint bg-mint-light' : 'border-line'"
+        >
           <strong>{{ r.label }}</strong>
-          <small>{{ r.hint }}</small>
+          <small class="text-muted">{{ r.hint }}</small>
         </button>
       }
     </div>
 
-    <label class="field">
-      <span>الاسم</span>
-      <input type="text" formControlName="fullName" placeholder="محمد أحمد" autocomplete="name"
-             [class.invalid]="showError('fullName')" />
+    <label class="mb-[18px] block">
+      <span class="mb-1.5 block text-sm font-medium">الاسم</span>
+      <input
+        type="text"
+        formControlName="fullName"
+        placeholder="محمد أحمد"
+        autocomplete="name"
+        class="w-full rounded-xl border-[1.5px] bg-white px-3.5 py-[13px] text-ink focus:outline-none focus:ring-3 focus:ring-plum/15"
+        [ngClass]="showError('fullName') ? 'border-coral' : 'border-line focus:border-plum'"
+      />
       @if (showError('fullName')) {
-        <p class="error">اكتب اسمك.</p>
+        <p class="mt-1.5 text-[13px] text-coral">اكتب اسمك.</p>
       }
     </label>
 
-    <label class="field">
-      <span>الإيميل</span>
-      <input type="email" formControlName="email" placeholder="you@example.com" autocomplete="email"
-             [class.invalid]="showError('email')" />
+    <label class="mb-[18px] block">
+      <span class="mb-1.5 block text-sm font-medium">الإيميل</span>
+      <!-- Email and password are typed left-to-right even on an RTL page ([direction:ltr] text-left) -->
+      <input
+        type="email"
+        formControlName="email"
+        placeholder="you@example.com"
+        autocomplete="email"
+        class="[direction:ltr] w-full rounded-xl border-[1.5px] bg-white px-3.5 py-[13px] text-left text-ink focus:outline-none focus:ring-3 focus:ring-plum/15"
+        [ngClass]="showError('email') ? 'border-coral' : 'border-line focus:border-plum'"
+      />
       @if (showError('email')) {
-        <p class="error">اكتب إيميل صحيح.</p>
+        <p class="mt-1.5 text-[13px] text-coral">اكتب إيميل صحيح.</p>
       }
     </label>
 
-    <label class="field">
-      <span>كلمة السر</span>
-      <input type="password" formControlName="password" placeholder="6 حروف على الأقل" autocomplete="new-password"
-             [class.invalid]="showError('password')" />
+    <label class="mb-[18px] block">
+      <span class="mb-1.5 block text-sm font-medium">كلمة السر</span>
+      <input
+        type="password"
+        formControlName="password"
+        placeholder="6 حروف على الأقل"
+        autocomplete="new-password"
+        class="[direction:ltr] w-full rounded-xl border-[1.5px] bg-white px-3.5 py-[13px] text-left text-ink focus:outline-none focus:ring-3 focus:ring-plum/15"
+        [ngClass]="showError('password') ? 'border-coral' : 'border-line focus:border-plum'"
+      />
       @if (showError('password')) {
-        <p class="error">كلمة السر لازم تكون 6 حروف أو أكتر.</p>
+        <p class="mt-1.5 text-[13px] text-coral">كلمة السر لازم تكون 6 حروف أو أكتر.</p>
       }
     </label>
 
-    <button class="btn" type="submit" [disabled]="loading()">
+    <button
+      type="submit"
+      [disabled]="loading()"
+      class="w-full cursor-pointer rounded-xl bg-plum p-3.5 font-bold text-white transition-colors not-disabled:hover:bg-plum-dark disabled:cursor-not-allowed disabled:opacity-60"
+    >
       {{ loading() ? 'ثانية واحدة...' : 'إنشاء الحساب' }}
     </button>
   </form>
 
-  <p class="switch">عندك حساب؟ <a routerLink="/login">سجّل دخولك</a></p>
+  <!-- Google / Facebook sign-in: the look only for now, the buttons do nothing yet -->
+  <app-social-buttons />
+
+  <p class="mt-5 text-center text-sm text-muted">
+    عندك حساب؟ <a routerLink="/login" class="font-bold text-plum">سجّل دخولك</a>
+  </p>
 </app-auth-shell>
