@@ -1,83 +1,31 @@
-/* Global styles: colors, fonts, and the form look shared by login and register. */
+/* Global styles: the fonts + the Tailwind theme that carries the design. */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap');
+@import 'tailwindcss';
 
-/* The design colors live here once, every page uses them with var(--name) */
-:root {
-  --bg: #f4f0f7;        /* lavender page background */
-  --ink: #2a1636;       /* dark text */
-  --plum: #6b2d86;      /* main brand color */
-  --plum-dark: #55226d; /* button on hover */
-  --mint: #2fb58c;      /* second color */
-  --coral: #e5484d;     /* errors and small accents */
-  --muted: #85768f;     /* grey-purple helper text */
-  --line: #ded4e6;      /* input borders */
+/* The design values live here once. Tailwind turns each line into classes:
+   --color-plum -> bg-plum, text-plum, border-plum, ring-plum, ... */
+@theme {
+  --color-bg: #f4f0f7; /* lavender page background */
+  --color-ink: #2a1636; /* dark text */
+  --color-plum: #6b2d86; /* main brand color */
+  --color-plum-dark: #55226d; /* button on hover */
+  --color-mint: #2fb58c; /* second color */
+  --color-mint-light: #eafaf4; /* background of the chosen role card */
+  --color-coral: #e5484d; /* errors and small accents */
+  --color-muted: #85768f; /* grey-purple helper text */
+  --color-line: #ded4e6; /* input borders */
+  --color-art: #ebe3f2; /* picture side background on desktop */
+  --color-alert-bg: #fdecec; /* server error box background */
+  --color-alert-ink: #9b1c20; /* server error box text */
+
+  /* The page font, used by the body below */
+  --font-sans: 'IBM Plex Sans Arabic', 'Plus Jakarta Sans', sans-serif;
+
+  /* The design moves from one column to two at 800px,
+     so "md:" means 800px here (instead of Tailwind's default 768px) */
+  --breakpoint-md: 800px;
 }
-
-* { box-sizing: border-box; }
 
 body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: 'IBM Plex Sans Arabic', 'Plus Jakarta Sans', sans-serif;
+  @apply bg-bg font-sans text-ink;
 }
-
-/* ---------- Form pieces used by both auth pages ---------- */
-.field { display: block; margin-bottom: 18px; }
-.field > span { display: block; margin-bottom: 6px; font-weight: 500; font-size: 14px; }
-
-.field input {
-  width: 100%;
-  padding: 13px 14px;
-  font: inherit;
-  color: var(--ink);
-  background: #fff;
-  border: 1.5px solid var(--line);
-  border-radius: 12px;
-}
-.field input:focus { outline: none; border-color: var(--plum); box-shadow: 0 0 0 3px #6b2d8626; }
-.field input.invalid { border-color: var(--coral); }
-/* email and password are typed left-to-right even on an RTL page */
-.field input[type='email'], .field input[type='password'] { direction: ltr; text-align: left; }
-
-.error { margin: 6px 0 0; color: var(--coral); font-size: 13px; }
-
-.btn {
-  width: 100%;
-  padding: 14px;
-  font: inherit;
-  font-weight: 700;
-  color: #fff;
-  background: var(--plum);
-  border: 0;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btn:hover:not(:disabled) { background: var(--plum-dark); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* The red box that shows the server's answer (wrong password, etc.) */
-.alert {
-  margin-bottom: 18px;
-  padding: 12px 14px;
-  color: #9b1c20;
-  background: #fdecec;
-  border-radius: 12px;
-  font-size: 14px;
-}
-
-/* Titles and small texts that sit above/below the auth forms */
-h1 { margin: 0 0 6px; font-size: 26px; }
-.sub { margin: 0 0 24px; color: var(--muted); }
-.switch { margin-top: 20px; text-align: center; color: var(--muted); font-size: 14px; }
-.switch a { color: var(--plum); font-weight: 700; text-decoration: none; }
-
-/* Student / instructor cards on the register page */
-.roles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-.role {
-  display: flex; flex-direction: column; gap: 2px; padding: 12px; font: inherit; color: var(--ink);
-  text-align: start; background: #fff; border: 1.5px solid var(--line); border-radius: 12px; cursor: pointer;
-}
-.role small { color: var(--muted); }
-.role.active { border-color: var(--mint); background: #eafaf4; }

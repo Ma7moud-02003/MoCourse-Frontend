@@ -1,14 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { NgClass } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { errorMessage } from '../../core/error-message';
 import { AuthShell } from '../auth-shell/auth-shell';
+import { SocialButtons } from '../social-buttons/social-buttons';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, AuthShell],
+  imports: [ReactiveFormsModule, RouterLink, NgClass, AuthShell, SocialButtons],
   templateUrl: './login.html',
 })
 export class Login {

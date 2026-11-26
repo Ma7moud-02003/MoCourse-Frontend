@@ -6,10 +6,15 @@ import { AuthService } from '../core/auth.service';
 @Component({
   selector: 'app-home',
   template: `
-    <main style="min-height:100vh;display:grid;place-content:center;text-align:center;gap:16px">
-      <h1>أهلًا بيك في MoCourse</h1>
+    <main class="grid min-h-screen place-content-center gap-4 text-center">
+      <h1 class="text-2xl font-bold">أهلًا بيك في MoCourse</h1>
       <p>تم تسجيل الدخول بنجاح.</p>
-      <button class="btn" style="max-width:200px;margin:auto" (click)="auth.logout()">تسجيل خروج</button>
+      <button
+        class="mx-auto w-full max-w-[200px] cursor-pointer rounded-xl bg-plum p-3.5 font-bold text-white transition-colors hover:bg-plum-dark"
+        (click)="auth.logout()"
+      >
+        تسجيل خروج
+      </button>
     </main>
   `,
 })

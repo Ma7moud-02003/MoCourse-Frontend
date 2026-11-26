@@ -3,37 +3,63 @@
   headline="كل درس بيقرّبك خطوة من هدفك"
   caption="كمّل رحلتك من حيث وقفت، وخلّي النهارده يوم مذاكرة حلو."
 >
-  <h1>أهلًا بيك، يلا نكمّل</h1>
-  <p class="sub">سجّل دخولك وارجع لدروسك من حيث وقفت.</p>
+  <h1 class="mb-1.5 text-[26px] font-bold">أهلًا بيك، يلا نكمّل</h1>
+  <p class="mb-6 text-muted">سجّل دخولك وارجع لدروسك من حيث وقفت.</p>
 
   <!-- (ngSubmit) runs submit() when the user presses the button or Enter -->
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
     @if (serverError()) {
-      <div class="alert" role="alert">{{ serverError() }}</div>
+      <!-- The red box that shows the server's answer (wrong password, etc.) -->
+      <div role="alert" class="mb-[18px] rounded-xl bg-alert-bg px-3.5 py-3 text-sm text-alert-ink">
+        {{ serverError() }}
+      </div>
     }
 
-    <label class="field">
-      <span>الإيميل</span>
-      <input type="email" formControlName="email" placeholder="you@example.com" autocomplete="email"
-             [class.invalid]="showError('email')" />
+    <label class="mb-[18px] block">
+      <span class="mb-1.5 block text-sm font-medium">الإيميل</span>
+      <!-- Email is typed left-to-right even on an RTL page ([direction:ltr] text-left).
+           ngClass picks the border: red when there is an error, normal + plum focus otherwise -->
+      <input
+        type="email"
+        formControlName="email"
+        placeholder="you@example.com"
+        autocomplete="email"
+        class="[direction:ltr] w-full rounded-xl border-[1.5px] bg-white px-3.5 py-[13px] text-left text-ink focus:outline-none focus:ring-3 focus:ring-plum/15"
+        [ngClass]="showError('email') ? 'border-coral' : 'border-line focus:border-plum'"
+      />
       @if (showError('email')) {
-        <p class="error">اكتب إيميل صحيح.</p>
+        <p class="mt-1.5 text-[13px] text-coral">اكتب إيميل صحيح.</p>
       }
     </label>
 
-    <label class="field">
-      <span>كلمة السر</span>
-      <input type="password" formControlName="password" placeholder="6 حروف على الأقل" autocomplete="current-password"
-             [class.invalid]="showError('password')" />
+    <label class="mb-[18px] block">
+      <span class="mb-1.5 block text-sm font-medium">كلمة السر</span>
+      <input
+        type="password"
+        formControlName="password"
+        placeholder="6 حروف على الأقل"
+        autocomplete="current-password"
+        class="[direction:ltr] w-full rounded-xl border-[1.5px] bg-white px-3.5 py-[13px] text-left text-ink focus:outline-none focus:ring-3 focus:ring-plum/15"
+        [ngClass]="showError('password') ? 'border-coral' : 'border-line focus:border-plum'"
+      />
       @if (showError('password')) {
-        <p class="error">كلمة السر لازم تكون 6 حروف أو أكتر.</p>
+        <p class="mt-1.5 text-[13px] text-coral">كلمة السر لازم تكون 6 حروف أو أكتر.</p>
       }
     </label>
 
-    <button class="btn" type="submit" [disabled]="loading()">
+    <button
+      type="submit"
+      [disabled]="loading()"
+      class="w-full cursor-pointer rounded-xl bg-plum p-3.5 font-bold text-white transition-colors not-disabled:hover:bg-plum-dark disabled:cursor-not-allowed disabled:opacity-60"
+    >
       {{ loading() ? 'ثانية واحدة...' : 'دخول' }}
     </button>
   </form>
 
-  <p class="switch">أول مرة هنا؟ <a routerLink="/register">أنشئ حسابك</a></p>
+  <!-- Google / Facebook sign-in: the look only for now, the buttons do nothing yet -->
+  <app-social-buttons />
+
+  <p class="mt-5 text-center text-sm text-muted">
+    أول مرة هنا؟ <a routerLink="/register" class="font-bold text-plum">أنشئ حسابك</a>
+  </p>
 </app-auth-shell>
