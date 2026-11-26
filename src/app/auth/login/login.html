@@ -1,0 +1,39 @@
+<app-auth-shell
+  image="images/login.jpg"
+  headline="كل درس بيقرّبك خطوة من هدفك"
+  caption="كمّل رحلتك من حيث وقفت، وخلّي النهارده يوم مذاكرة حلو."
+>
+  <h1>أهلًا بيك، يلا نكمّل</h1>
+  <p class="sub">سجّل دخولك وارجع لدروسك من حيث وقفت.</p>
+
+  <!-- (ngSubmit) runs submit() when the user presses the button or Enter -->
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (serverError()) {
+      <div class="alert" role="alert">{{ serverError() }}</div>
+    }
+
+    <label class="field">
+      <span>الإيميل</span>
+      <input type="email" formControlName="email" placeholder="you@example.com" autocomplete="email"
+             [class.invalid]="showError('email')" />
+      @if (showError('email')) {
+        <p class="error">اكتب إيميل صحيح.</p>
+      }
+    </label>
+
+    <label class="field">
+      <span>كلمة السر</span>
+      <input type="password" formControlName="password" placeholder="6 حروف على الأقل" autocomplete="current-password"
+             [class.invalid]="showError('password')" />
+      @if (showError('password')) {
+        <p class="error">كلمة السر لازم تكون 6 حروف أو أكتر.</p>
+      }
+    </label>
+
+    <button class="btn" type="submit" [disabled]="loading()">
+      {{ loading() ? 'ثانية واحدة...' : 'دخول' }}
+    </button>
+  </form>
+
+  <p class="switch">أول مرة هنا؟ <a routerLink="/register">أنشئ حسابك</a></p>
+</app-auth-shell>
