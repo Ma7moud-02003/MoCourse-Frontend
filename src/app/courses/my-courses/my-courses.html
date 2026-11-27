@@ -2,17 +2,22 @@
   <app-header />
 
   <main class="mx-auto w-full max-w-[1120px] flex-1 px-5 pb-16">
-    <h1 class="mt-8 text-[28px] font-bold leading-10">كورساتي</h1>
-    <p class="mt-1 text-[14px] text-muted">الكورسات اللي اشتركت فيها، وكمّل من حيث وقفت.</p>
+    <p class="mt-6 text-[12px] text-muted">الرئيسية ‹ كورساتي</p>
+    <h1 class="mt-2 text-[26px] font-bold leading-10">كورساتي</h1>
+    <p class="text-[14px] text-muted">كل كورساتك وتقدّمك في مكان واحد.</p>
 
     @if (loading()) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted">
+      <p
+        class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted"
+      >
         بنجيب كورساتك...
       </p>
     }
 
     @if (!loading() && error()) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink">
+      <p
+        class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink"
+      >
         {{ error() }}
       </p>
     }
@@ -20,65 +25,155 @@
     @if (!loading() && !error() && items().length === 0) {
       <section class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center">
         <p class="text-[15px] leading-8 text-ink">لسه مااشتركتش في أي كورس.</p>
-        <a routerLink="/courses" class="mt-5 inline-block rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white">
+        <a
+          routerLink="/courses"
+          class="mt-5 inline-block rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white"
+        >
           شوف الكورسات
         </a>
       </section>
     }
 
-    <ul class="mt-6 grid gap-4 md:grid-cols-2">
-      @for (item of items(); track item.id) {
-        <li class="flex flex-col overflow-hidden rounded-[22px] border border-line bg-white">
-          @if (item.course.thumbnail) {
-            <img [src]="item.course.thumbnail" alt="" class="aspect-video w-full object-cover" loading="lazy" />
-          }
-          <div class="flex flex-1 flex-col p-5">
-            <div class="flex items-start justify-between gap-3">
-              <h2 class="text-[17px] font-bold leading-8">{{ item.course.title }}</h2>
-              @if (item.status === 'completed') {
-                <span class="shrink-0 rounded-full bg-mint-light px-3 py-1 text-[12px] font-semibold text-mint">
-                  خلّصته
-                </span>
-              }
-            </div>
+    @if (!loading() && !error() && items().length > 0) {
+      <!-- Tabs -->
+      <div role="tablist" class="mt-5 inline-flex rounded-full border border-line bg-white p-1">
+        @for (t of tabs; track t.id) {
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="tab() === t.id"
+            (click)="tab.set(t.id)"
+            class="cursor-pointer rounded-full px-5 py-2 text-[13px] font-semibold"
+            [class]="tab() === t.id ? 'bg-plum text-white' : 'text-muted'"
+          >
+            {{ t.label }}
+          </button>
+        }
+      </div>
 
-            <!-- How far he got -->
-            <p class="mt-3 text-[12px] text-muted">خلصت {{ item.progressPercent }}%</p>
-            <div
-              class="mt-1.5 h-2 overflow-hidden rounded-full bg-bg"
-              role="progressbar"
-              aria-label="تقدمك في الكورس"
-              [attr.aria-valuenow]="item.progressPercent"
-              aria-valuemin="0"
-              aria-valuemax="100"
+      <div class="mt-5 grid items-start gap-5 md:grid-cols-[1fr_300px]">
+        <!-- The courses -->
+        <div class="min-w-0">
+          <h2 class="text-[18px] font-bold">
+            {{
+              tab() === 'done'
+                ? 'خلّصتها'
+                : tab() === 'learning'
+                  ? 'بتتعلّمها دلوقتي'
+                  : 'كل كورساتي'
+            }}
+          </h2>
+          @if (shown().length === 0) {
+            <p
+              class="mt-3 rounded-[18px] border border-line bg-white px-5 py-8 text-center text-[14px] text-muted"
             >
-              <div class="h-full rounded-full bg-mint" [style.width.%]="item.progressPercent"></div>
-            </div>
-
-            <div class="mt-5 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                (click)="continueCourse(item.course.id)"
-                [disabled]="opening() === item.course.id"
-                class="rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white disabled:opacity-60"
-              >
-                {{ item.progressPercent > 0 ? 'كمّل من حيث وقفت' : 'ابدأ الكورس' }}
-              </button>
-              <a
-                [routerLink]="['/courses', item.course.id]"
-                class="rounded-full border border-line px-4 py-2.5 text-[14px] font-medium text-ink hover:border-plum/40"
-              >
-                صفحة الكورس
-              </a>
-            </div>
-
-            @if (emptyCourse() === item.course.id) {
-              <p class="mt-3 text-[13px] text-muted">المدرّس لسه مااضافش دروس للكورس ده.</p>
+              {{ tab() === 'done' ? 'لسه ماخلّصتش أي كورس.' : 'مفيش كورسات هنا.' }}
+            </p>
+          }
+          <ul class="mt-3 space-y-3">
+            @for (item of shown(); track item.id) {
+              <li class="flex overflow-hidden rounded-[20px] border border-line bg-white">
+                <div class="min-w-0 flex-1 p-4">
+                  <div class="flex items-start justify-between gap-3">
+                    <h3 class="text-[16px] font-bold leading-7">{{ item.course.title }}</h3>
+                    @if (item.status === 'completed') {
+                      <span
+                        class="shrink-0 rounded-full bg-mint-light px-3 py-1 text-[12px] font-semibold text-mint"
+                        >خلّصته</span
+                      >
+                    }
+                  </div>
+                  <div
+                    class="mt-3 h-2 overflow-hidden rounded-full bg-art"
+                    dir="ltr"
+                    role="progressbar"
+                    aria-label="تقدمك في الكورس"
+                    [attr.aria-valuenow]="item.progressPercent"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    <div
+                      class="h-full rounded-full bg-plum"
+                      [style.width.%]="item.progressPercent"
+                    ></div>
+                  </div>
+                  <div class="mt-1.5 flex justify-between text-[12px] text-muted">
+                    <span>
+                      @if (counts()[item.course.id]; as c) {
+                        {{ c.completedLessons }} من {{ c.totalLesoons }} درس
+                      }
+                    </span>
+                    <span>{{ item.progressPercent }}%</span>
+                  </div>
+                  <div class="mt-3 flex flex-wrap items-center gap-4">
+                    <button
+                      type="button"
+                      (click)="continueCourse(item.course.id)"
+                      [disabled]="opening() === item.course.id"
+                      class="cursor-pointer rounded-full bg-plum px-5 py-2 text-[13px] font-semibold text-white hover:bg-plum-dark disabled:opacity-60"
+                    >
+                      {{ item.progressPercent > 0 ? 'كمّلي التعلّم' : 'ابدئي الكورس' }}
+                    </button>
+                    <a
+                      [routerLink]="['/courses', item.course.id]"
+                      class="text-[13px] font-medium text-plum"
+                      >صفحة الكورس والامتحانات ‹</a
+                    >
+                  </div>
+                  @if (emptyCourse() === item.course.id) {
+                    <p class="mt-3 text-[13px] text-muted">المدرّس لسه مااضافش دروس للكورس ده.</p>
+                  }
+                </div>
+                @if (item.course.thumbnail) {
+                  <div class="relative w-24 shrink-0 sm:w-40">
+                    <img
+                      [src]="item.course.thumbnail"
+                      alt=""
+                      class="absolute inset-0 size-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                }
+              </li>
             }
-          </div>
-        </li>
-      }
-    </ul>
+          </ul>
+        </div>
+
+        <!-- The certificates box -->
+        @if (finished().length > 0) {
+          <aside class="rounded-[22px] bg-[#fdebe4] p-5 md:sticky md:top-4">
+            <h2 class="text-[17px] font-bold text-[#a3402a]">
+              خلّصتي {{ finished().length }} كورس
+            </h2>
+            <p class="mt-1 text-[12px] leading-6 text-[#a3402a]">
+              مبروك. شهاداتك جاهزة في صفحة شهاداتي.
+            </p>
+            <ul class="mt-3 space-y-2">
+              @for (item of finished(); track item.id) {
+                <li class="flex items-center justify-between gap-3 rounded-[14px] bg-white p-3">
+                  <span class="min-w-0 truncate text-[14px] font-semibold">{{
+                    item.course.title
+                  }}</span>
+                  @if (certificateOf(item.course.title); as cert) {
+                    <a
+                      [routerLink]="['/certificates', cert.id]"
+                      class="shrink-0 text-[12px] font-semibold text-[#a3402a]"
+                      >الشهادة ‹</a
+                    >
+                  } @else {
+                    <a
+                      routerLink="/certificates"
+                      class="shrink-0 text-[12px] font-semibold text-[#a3402a]"
+                      >شهاداتي ‹</a
+                    >
+                  }
+                </li>
+              }
+            </ul>
+          </aside>
+        }
+      </div>
+    }
   </main>
 
   <app-footer />
