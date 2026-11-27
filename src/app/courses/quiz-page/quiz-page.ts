@@ -2,7 +2,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { errorMessage } from '../../core/error-message';
-import { isFinishedResult, Quiz, QuizQuestion, QuizResult, QuizService } from '../../core/quiz.service';
+import {
+  isFinishedResult,
+  Quiz,
+  QuizQuestion,
+  QuizResult,
+  QuizService,
+} from '../../core/quiz.service';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
 
@@ -21,6 +27,8 @@ export class QuizPage implements OnInit, OnDestroy {
   courseId = 0;
 
   loading = signal(true);
+  // The first screen: what the exam is, before he starts it (starting opens his one attempt).
+  intro = signal(true);
   errorText = signal('');
 
   // The exam itself (title, marks, time limit). It comes from the course's exam list,
@@ -52,11 +60,24 @@ export class QuizPage implements OnInit, OnDestroy {
       return;
     }
 
-    // The exam details for the top of the page (the start call does not send them).
-    this.loadQuizInfo(this.courseId, quizId);
+    // The exam details for the first screen (the start call does not send them).
+    // Only a student who joined the course can read the list; others get a clear message.
+    this.quizzes.courseQuizzes(this.courseId).subscribe({
+      next: (list) => {
+        this.quiz.set(list.find((item) => item.id === quizId) ?? null);
+        this.loading.set(false);
+        if (!this.quiz()) this.errorText.set('الامتحان مش موجود أو مش متاح لك.');
+      },
+      error: (err: HttpErrorResponse) => this.showStartError(err),
+    });
+  }
 
-    // Starting also tells us whether he already has an attempt: open (continue it)
-    // or finished (show the score straight away).
+  // "ابدأ الامتحان": starting also tells us whether he already has an attempt:
+  // open (continue it) or finished (show the score straight away).
+  begin() {
+    const quizId = Number(this.route.snapshot.paramMap.get('quizId'));
+    this.intro.set(false);
+    this.loading.set(true);
     this.quizzes.start(quizId).subscribe({
       next: (answer) => {
         // He already finished this exam: the backend sends the score itself.
@@ -108,15 +129,6 @@ export class QuizPage implements OnInit, OnDestroy {
     const rest = String(seconds % 60).padStart(2, '0');
     if (hours > 0) return `${hours}:${String(minutes).padStart(2, '0')}:${rest}`;
     return `${minutes}:${rest}`;
-  }
-
-  // The title, marks and time limit of this exam, from the course's exam list.
-  // If it cannot be read we still show the exam, just without that header.
-  private loadQuizInfo(courseId: number, quizId: number) {
-    this.quizzes.courseQuizzes(courseId).subscribe({
-      next: (list) => this.quiz.set(list.find((item) => item.id === quizId) ?? null),
-      error: () => this.quiz.set(null),
-    });
   }
 
   private loadQuestions(attemptId: number) {
@@ -224,6 +236,8 @@ export class QuizPage implements OnInit, OnDestroy {
 
   // A friendly line for the score card: "نجحت" or "لسه محتاج درجة أعلى".
   passedText(result: QuizResult): string {
-    return result.passed ? 'مبروك، نجحت في الامتحان.' : 'لسه محتاج درجة أعلى، جرّب تراجع الدرس وتاني مرة.';
+    return result.passed
+      ? 'مبروك، نجحت في الامتحان.'
+      : 'لسه محتاج درجة أعلى، جرّب تراجع الدرس وتاني مرة.';
   }
 }
