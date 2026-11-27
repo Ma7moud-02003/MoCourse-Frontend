@@ -4,14 +4,7 @@ import { CourseStudent, TeacherCourse, TeacherService } from '../../core/teacher
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
 
-// One row of the table: a student in one of his courses.
-interface Row {
-  student: CourseStudent;
-  course: TeacherCourse;
-}
-
-// Every student of every course of the teacher, with a search box.
-// The backend lists students per course, so we ask once for each course.
+// The teacher picks one of his courses and sees its students with how far each one got.
 @Component({
   selector: 'app-all-students',
   imports: [RouterLink, AppHeader, AppFooter],
@@ -20,20 +13,32 @@ interface Row {
 export class AllStudents implements OnInit {
   private teacher = inject(TeacherService);
 
-  rows = signal<Row[]>([]);
+  courses = signal<TeacherCourse[]>([]);
+  courseId = signal(0);
+  students = signal<CourseStudent[]>([]);
+  // the percent of each student, by student id; missing until it arrives
+  progress = signal<Record<number, number>>({});
   search = signal('');
   loading = signal(true);
   failed = signal(false);
 
-  // the rows whose student name contains the search text
+  // the students whose name contains the search text
   shown = computed(() => {
     const text = this.search().trim().toLowerCase();
-    return this.rows().filter((row) => row.student.user.fullName.toLowerCase().includes(text));
+    return this.students().filter((s) => s.user.fullName.toLowerCase().includes(text));
   });
+
+  // the three number tiles
+  learning = computed(() => this.students().filter((s) => s.status !== 'completed').length);
+  finished = computed(() => this.students().filter((s) => s.status === 'completed').length);
 
   ngOnInit() {
     this.teacher.myCourses().subscribe({
-      next: (courses) => this.loadStudents(courses),
+      next: (list) => {
+        this.courses.set(list);
+        if (list.length > 0) this.pick(list[0].id);
+        else this.loading.set(false);
+      },
       error: () => {
         this.loading.set(false);
         this.failed.set(true);
@@ -41,25 +46,27 @@ export class AllStudents implements OnInit {
     });
   }
 
-  private loadStudents(courses: TeacherCourse[]) {
-    if (courses.length === 0) {
-      this.loading.set(false);
-      return;
-    }
-    let left = courses.length;
-    for (const course of courses) {
-      this.teacher.students(course.id).subscribe({
-        next: (list) =>
-          this.rows.update((all) => [...all, ...list.map((student) => ({ student, course }))]),
-        error: () => {}, // one course failing should not hide the others
-        complete: () => {
-          if (--left === 0) this.loading.set(false);
-        },
-      });
-    }
-  }
-
-  joined(iso: string): string {
-    return new Date(iso).toLocaleDateString('ar-EG', { dateStyle: 'medium' });
+  pick(id: number) {
+    this.courseId.set(id);
+    this.students.set([]);
+    this.progress.set({});
+    this.loading.set(true);
+    this.teacher.students(id).subscribe({
+      next: (list) => {
+        this.students.set(list);
+        this.loading.set(false);
+        // one small request per student for his percent
+        for (const s of list) {
+          this.teacher.studentProgress(id, s.user.id).subscribe({
+            next: (p) =>
+              this.progress.update((all) => ({ ...all, [s.user.id]: Math.round(p.persentage) })),
+          });
+        }
+      },
+      error: () => {
+        this.loading.set(false);
+        this.failed.set(true);
+      },
+    });
   }
 }
