@@ -156,6 +156,11 @@ export class CourseExams implements OnInit {
 
   showQuestions(exam: TeacherExam) {
     this.openExam.set(exam);
+    this.editTitle.set(exam.title);
+    this.editDescription.set(exam.description ?? '');
+    this.editPassMark.set(String(exam.passMark));
+    this.examNote.set(null);
+    this.cancelEditQuestion();
     this.questions.set([]);
     this.publishError.set('');
     this.resetQuestionForm();
@@ -166,7 +171,7 @@ export class CourseExams implements OnInit {
     const exam = this.openExam();
     if (!exam) return;
     this.exams.questions(exam.id).subscribe({
-      next: (list) => this.questions.set(list),
+      next: (list) => this.questions.set([...list].sort((a, b) => a.order - b.order)),
       error: () => this.questions.set([]),
     });
   }
@@ -244,6 +249,126 @@ export class CourseExams implements OnInit {
         error: (err: HttpErrorResponse) => {
           this.savingQuestion.set(false);
           this.questionError.set(this.saveError(err));
+        },
+      });
+  }
+
+  // ----- edit the exam itself -----
+
+  editTitle = signal('');
+  editDescription = signal('');
+  editPassMark = signal('');
+  examNote = signal<{ ok: boolean; text: string } | null>(null);
+  savingExam = signal(false);
+
+  saveExam() {
+    const exam = this.openExam();
+    if (!exam) return;
+    const title = this.editTitle().trim();
+    const passMark = Number(this.editPassMark());
+    if (title.length < 3 || title.length > 150) {
+      this.examNote.set({ ok: false, text: 'اسم الامتحان لازم يكون بين 3 و150 حرف.' });
+      return;
+    }
+    if (
+      this.editPassMark() === '' ||
+      !Number.isInteger(passMark) ||
+      passMark < 0 ||
+      passMark > 100
+    ) {
+      this.examNote.set({ ok: false, text: 'درجة النجاح لازم تكون رقم صحيح بين 0 و100.' });
+      return;
+    }
+    this.savingExam.set(true);
+    this.examNote.set(null);
+    this.exams
+      .update(exam.id, { title, description: this.editDescription().trim(), passMark })
+      .subscribe({
+        next: () => {
+          this.savingExam.set(false);
+          this.openExam.set({
+            ...exam,
+            title,
+            description: this.editDescription().trim(),
+            passMark,
+          });
+          this.examNote.set({ ok: true, text: 'اتحفظ التعديل.' });
+          this.loadExams();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.savingExam.set(false);
+          this.examNote.set({ ok: false, text: this.saveError(err) });
+        },
+      });
+  }
+
+  // ----- edit one question -----
+
+  editing = signal<ExamQuestion | null>(null); // the question being edited
+  editText = signal('');
+  editMark = signal('');
+  editChoices = signal<{ id: number; text: string }[]>([]);
+  editCorrect = signal(0); // the id of the right choice
+  editError = signal('');
+  savingEdit = signal(false);
+
+  editQuestion(question: ExamQuestion) {
+    this.editing.set(question);
+    this.editText.set(question.question);
+    this.editMark.set(String(question.mark));
+    this.editChoices.set(question.choices.map((c) => ({ id: c.id, text: c.text })));
+    this.editCorrect.set(question.choices.find((c) => c.isCorrect)?.id ?? 0);
+    this.editError.set('');
+  }
+
+  cancelEditQuestion() {
+    this.editing.set(null);
+    this.editError.set('');
+  }
+
+  setEditChoice(id: number, text: string) {
+    this.editChoices.update((list) => list.map((c) => (c.id === id ? { ...c, text } : c)));
+  }
+
+  saveQuestionEdit() {
+    const question = this.editing();
+    if (!question) return;
+    const text = this.editText().trim();
+    const mark = Number(this.editMark());
+    if (!text) {
+      this.editError.set('اكتب نص السؤال.');
+      return;
+    }
+    if (!Number.isInteger(mark) || mark < 1) {
+      this.editError.set('درجة السؤال لازم تكون رقم صحيح من 1 فوق.');
+      return;
+    }
+    if (this.editChoices().some((c) => c.text.trim() === '')) {
+      this.editError.set('كل اختيار لازم يكون مكتوب.');
+      return;
+    }
+    this.savingEdit.set(true);
+    this.editError.set('');
+    this.exams
+      .updateQuestion(question.id, {
+        question: text,
+        mark,
+        choices: this.editChoices().map((c) => ({
+          id: c.id,
+          text: c.text.trim(),
+          isCorrect: c.id === this.editCorrect(),
+        })),
+      })
+      .subscribe({
+        next: () => {
+          this.savingEdit.set(false);
+          this.cancelEditQuestion();
+          this.loadQuestions();
+          this.loadExams(); // the total marks may have changed
+        },
+        error: (err: HttpErrorResponse) => {
+          this.savingEdit.set(false);
+          this.editError.set(this.saveError(err));
         },
       });
   }
