@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs';
+import { homeForRole, roleFromToken } from './auth-role';
 import { API_URL } from './config';
 
 // What we send to the backend. The names must match the backend DTOs exactly,
@@ -34,6 +35,15 @@ export class AuthService {
 
   token = this.tokenSignal.asReadonly();
   isLoggedIn = computed(() => this.tokenSignal() !== null);
+
+  // The role inside the token: 'student', 'Instructor' or 'admin'.
+  role = computed(() => roleFromToken(this.tokenSignal()));
+
+  // The page this person should see after login or register.
+  // A student goes to the courses page, a teacher to the teacher area, an admin to the admin area.
+  home() {
+    return homeForRole(this.role());
+  }
 
   login(body: LoginBody) {
     return this.http
