@@ -40,6 +40,12 @@ export const routes: Routes = [
     loadComponent: () => import('./teacher/teacher-home').then((m) => m.TeacherHome),
   },
   {
+    // a teacher opens a new course
+    path: 'teacher/courses/new',
+    canActivate: [authGuard],
+    loadComponent: () => import('./teacher/course-form/course-form').then((m) => m.CourseForm),
+  },
+  {
     // the admin area: where an admin lands after login
     path: 'admin',
     canActivate: [authGuard],
