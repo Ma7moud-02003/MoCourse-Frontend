@@ -78,6 +78,27 @@ export const routes: Routes = [
     loadComponent: () => import('./teacher/teacher-home').then((m) => m.TeacherHome),
   },
   {
+    // the join requests, one tab per status
+    path: 'teacher/requests',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./teacher/requests/payment-requests').then((m) => m.PaymentRequests),
+  },
+  {
+    // every student of every course
+    path: 'teacher/students',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./teacher/all-students/all-students').then((m) => m.AllStudents),
+  },
+  {
+    // where students send the money
+    path: 'teacher/payment-info',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./teacher/payment-info/payment-info').then((m) => m.PaymentInfo),
+  },
+  {
     // the teacher's numbers and what happened lately
     path: 'teacher/dashboard',
     canActivate: [authGuard],
