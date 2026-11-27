@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { map } from 'rxjs';
 import { API_URL } from './config';
 
 // A course the teacher owns, as it shows in his list.
@@ -48,6 +49,14 @@ export interface PaymentInfoBody {
   ownerName: string;
 }
 
+// One student who joined a course.
+export interface CourseStudent {
+  id: number;
+  enrolledAt: string;
+  status: string; // in_progress or completed
+  user: { id: number; fullName: string; avatar: string | null };
+}
+
 // Everything the teacher area needs: his courses, the join requests, and his payment numbers.
 @Injectable({ providedIn: 'root' })
 export class TeacherService {
@@ -79,5 +88,13 @@ export class TeacherService {
   savePaymentInfo(info: PaymentInfoBody, alreadySaved: boolean) {
     if (alreadySaved) return this.http.patch(`${API_URL}/paymentinfo/update`, info);
     return this.http.post(`${API_URL}/paymentinfo`, info);
+  }
+
+  // GET /api/enrollment/students/:courseId
+  // When nobody joined yet, the backend answers with an object (not a list), so we turn that into [].
+  students(courseId: number) {
+    return this.http
+      .get<CourseStudent[] | { messsage: string }>(`${API_URL}/enrollment/students/${courseId}`)
+      .pipe(map((answer) => (Array.isArray(answer) ? answer : [])));
   }
 }

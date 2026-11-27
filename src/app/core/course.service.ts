@@ -15,7 +15,7 @@ export interface CourseCard {
   discountPrice: number | null;
   thumbnail: string;
   createdAt: string;
-  category: { name: string } | null;
+  category: { id?: number; name: string } | null;
   Instractor: { id: number; fullName: string; avatar: string | null } | null;
 }
 
@@ -110,12 +110,32 @@ export class CourseService {
     // cannot be created from the site yet (that needs a backend fix)
     form.append('isPublished', 'true');
     if (course.discountPrice) form.append('discountPrice', String(course.discountPrice));
-    // these two are lists on the backend, so each line is sent as its own field
-    for (const cover of course.covers) form.append('covers', cover);
-    for (const requirement of course.requirements) form.append('requirements', requirement);
+    // these two are lists on the backend, so each line is sent as its own field.
+    // The name ends with [] so that a list with ONE line is still read as a list.
+    for (const cover of course.covers) form.append('covers[]', cover);
+    for (const requirement of course.requirements) form.append('requirements[]', requirement);
     form.append('thumbnail', thumbnail);
 
     return this.http.post<CourseDetails>(`${API_URL}/course`, form);
+  }
+
+  // PATCH /api/course/update/:id — changes a course. The picture is optional:
+  // when he did not pick a new one, the old one stays.
+  // The backend cannot clear a discount, so an empty discount keeps the old one.
+  update(id: number, course: NewCourse, thumbnail: File | null) {
+    const form = new FormData();
+    form.append('title', course.title);
+    form.append('describtion', course.describtion);
+    form.append('price', String(course.price));
+    form.append('duration', String(course.duration));
+    form.append('level', course.level);
+    form.append('categoryId', String(course.categoryId));
+    if (course.discountPrice) form.append('discountPrice', String(course.discountPrice));
+    for (const cover of course.covers) form.append('covers[]', cover);
+    for (const requirement of course.requirements) form.append('requirements[]', requirement);
+    if (thumbnail) form.append('thumbnail', thumbnail);
+
+    return this.http.patch<CourseDetails>(`${API_URL}/course/update/${id}`, form);
   }
 
   // GET /api/course/details/:id — everything one course page needs in one answer.
