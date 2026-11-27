@@ -2,40 +2,64 @@
   <app-header />
 
   <main class="mx-auto w-full max-w-[860px] flex-1 px-5 pb-16">
-    <a
-      routerLink="/teacher"
-      class="mt-5 inline-flex items-center gap-2 rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum"
-    >
-      رجوع للوحة المدرّس
-    </a>
+    <p class="mt-5 text-[12.5px] text-muted">
+      <a routerLink="/teacher" class="hover:text-plum">الرئيسية</a> ‹ {{ courseTitle() }} ‹ المحتوى
+    </p>
+    <h1 class="mt-2 text-[26px] font-bold leading-10">محتوى الكورس</h1>
+    <p class="mt-1 text-[13.5px] leading-7 text-muted">
+      رتّب الأقسام والدروس. كل درس له نوع: فيديو أو PDF أو نص.
+    </p>
 
-    <section class="mt-4 rounded-[22px] border border-line bg-white p-5 md:p-6">
-      <h1 class="text-[21px] font-bold leading-9">محتوى الكورس</h1>
-      @if (courseTitle()) {
-        <p class="mt-1 text-[14px] font-medium text-plum">{{ courseTitle() }}</p>
-      }
-      <p class="mt-1 text-[13.5px] leading-7 text-muted">
-        الكورس بيتقسم لأقسام، وكل قسم فيه دروس. ضيف قسم الأول وبعدين ضيف دروسه.
-      </p>
-
-      <!-- ===== new section ===== -->
-      <div class="mt-5 flex flex-col gap-2 sm:flex-row">
-        <input
-          type="text"
-          [value]="sectionTitle()"
-          (input)="sectionTitle.set($any($event.target).value)"
-          placeholder="اسم القسم الجديد، مثال: المقدمة"
-          class="w-full flex-1 rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
-        />
+    <!-- The course and the add-section button -->
+    <section class="mt-5 rounded-[22px] border border-line bg-white p-4 md:p-5">
+      <div class="flex flex-wrap items-center gap-4">
+        @if (courseThumbnail()) {
+          <img
+            [src]="courseThumbnail()"
+            alt=""
+            class="h-16 w-24 shrink-0 rounded-xl object-cover"
+          />
+        }
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-[17px] font-bold">{{ courseTitle() }}</p>
+          <p class="mt-1 flex flex-wrap items-center gap-2 text-[12.5px] text-muted">
+            <span
+              class="rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold"
+              [class]="coursePublished() ? 'bg-mint-light text-mint' : 'bg-art text-plum'"
+            >
+              {{ coursePublished() ? 'منشور' : 'مسودة' }}
+            </span>
+            {{ summary().sections }} أقسام · {{ summary().lessons }} دروس
+          </p>
+        </div>
         <button
           type="button"
-          (click)="addSection()"
-          [disabled]="addingSection()"
-          class="cursor-pointer rounded-full bg-plum px-5 py-2.5 text-[13.5px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+          (click)="showSectionForm.set(!showSectionForm())"
+          class="cursor-pointer rounded-full bg-mint px-5 py-2.5 text-[13.5px] font-semibold text-white transition-opacity hover:opacity-90"
         >
-          {{ addingSection() ? 'بنضيف...' : 'ضيف قسم' }}
+          + إضافة قسم
         </button>
       </div>
+
+      @if (showSectionForm()) {
+        <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+          <input
+            type="text"
+            [value]="sectionTitle()"
+            (input)="sectionTitle.set($any($event.target).value)"
+            placeholder="اسم القسم الجديد، مثال: المقدمة"
+            class="w-full flex-1 rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+          <button
+            type="button"
+            (click)="addSection()"
+            [disabled]="addingSection()"
+            class="cursor-pointer rounded-full bg-plum px-5 py-2.5 text-[13.5px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+          >
+            {{ addingSection() ? 'بنضيف...' : 'ضيف القسم' }}
+          </button>
+        </div>
+      }
       @if (sectionError()) {
         <p class="mt-2 text-[13px] text-red-700" role="alert">{{ sectionError() }}</p>
       }
@@ -51,143 +75,269 @@
     } @else if (sections().length === 0) {
       <p class="mt-6 text-center text-[14px] text-muted">لسه مفيش أقسام. ضيف أول قسم من فوق.</p>
     } @else {
-      <div class="mt-4 flex flex-col gap-4">
-        @for (section of sections(); track section.id) {
-          <section class="rounded-[22px] border border-line bg-white p-5">
-            <h2 class="text-[16px] font-bold">{{ section.order }}. {{ section.title }}</h2>
-
-            <ul class="mt-3 divide-y divide-line">
-              @for (lesson of lessonsOf(section); track lesson.id) {
-                <li class="flex items-center justify-between gap-3 py-2.5 text-[14px]">
-                  <span class="min-w-0 truncate">{{ lesson.order }}. {{ lesson.title }}</span>
-                  <span class="shrink-0 text-[12.5px] text-muted">
-                    @switch (lesson.type) {
-                      @case ('video') { فيديو }
-                      @case ('pdf') { PDF }
-                      @case ('text') { نص }
-                    }
-                    @if (lesson.isPreview) { · مجاني للكل }
-                  </span>
-                </li>
-              } @empty {
-                <li class="py-2.5 text-[13.5px] text-muted">
-                  {{ lessons()[section.id] ? 'القسم ده لسه فاضي.' : 'بنحمّل الدروس...' }}
-                </li>
-              }
-            </ul>
-
-            @if (openSectionId() === section.id) {
-              <!-- ===== new lesson form ===== -->
-              <div class="mt-3 grid gap-3 rounded-2xl bg-art/50 p-4">
-                <label class="block">
-                  <span class="text-[13px] font-medium">اسم الدرس</span>
+      <div class="mt-4 grid gap-4 lg:grid-cols-[1fr_270px] lg:items-start">
+        <div class="flex flex-col gap-4">
+          @if (sectionNote()) {
+            <p
+              class="rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink"
+              role="alert"
+            >
+              {{ sectionNote() }}
+            </p>
+          }
+          @for (section of sections(); track section.id) {
+            <section class="rounded-[22px] border border-line bg-white p-5">
+              <!-- Section title: tap it to fold or open the section -->
+              <div class="flex items-center gap-3">
+                <span
+                  class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-art text-[13px] font-bold text-plum"
+                >
+                  {{ section.order }}
+                </span>
+                @if (renamingId() === section.id) {
                   <input
                     type="text"
-                    [value]="lessonTitle()"
-                    (input)="lessonTitle.set($any($event.target).value)"
-                    class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
+                    [value]="renameText()"
+                    (input)="renameText.set($any($event.target).value)"
+                    class="w-full flex-1 rounded-xl border-[1.5px] border-line bg-white px-3 py-2 text-[14px] outline-none focus:border-plum"
                   />
-                </label>
-
-                <label class="block">
-                  <span class="text-[13px] font-medium">وصف قصير (اختياري)</span>
-                  <textarea
-                    rows="2"
-                    [value]="lessonDescription()"
-                    (input)="lessonDescription.set($any($event.target).value)"
-                    class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none focus:border-plum"
-                  ></textarea>
-                </label>
-
-                <div>
-                  <span class="text-[13px] font-medium">نوع الدرس</span>
-                  <div class="mt-1.5 flex flex-wrap gap-2">
-                    @for (kind of kinds; track kind.value) {
-                      <button
-                        type="button"
-                        (click)="chooseKind(kind.value)"
-                        [class]="
-                          lessonKind() === kind.value
-                            ? 'cursor-pointer rounded-full bg-plum px-4 py-1.5 text-[13px] font-semibold text-white'
-                            : 'cursor-pointer rounded-full border border-line bg-white px-4 py-1.5 text-[13px] font-medium text-ink'
-                        "
-                      >
-                        {{ kind.label }}
-                      </button>
-                    }
-                  </div>
-                </div>
-
-                @if (lessonKind() === 'text') {
-                  <label class="block">
-                    <span class="text-[13px] font-medium">نص الدرس</span>
-                    <textarea
-                      rows="6"
-                      [value]="lessonText()"
-                      (input)="lessonText.set($any($event.target).value)"
-                      class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none focus:border-plum"
-                    ></textarea>
-                  </label>
-                } @else {
-                  <label class="block">
-                    <span class="text-[13px] font-medium">
-                      {{ lessonKind() === 'video' ? 'ملف الفيديو' : 'ملف الـ PDF' }}
-                    </span>
-                    <input
-                      type="file"
-                      [accept]="lessonKind() === 'video' ? 'video/*' : 'application/pdf'"
-                      (change)="onFile($event)"
-                      class="mt-1.5 block w-full text-[13px]"
-                    />
-                  </label>
-                }
-
-                <label class="flex items-center gap-2 text-[13.5px]">
-                  <input
-                    type="checkbox"
-                    [checked]="lessonPreview()"
-                    (change)="lessonPreview.set($any($event.target).checked)"
-                  />
-                  درس مجاني، أي حد يقدر يشوفه قبل ما يشترك
-                </label>
-
-                @if (lessonError()) {
-                  <p class="text-[13px] text-red-700" role="alert">{{ lessonError() }}</p>
-                }
-                @if (addingLesson()) {
-                  <p class="text-[13px] text-muted">بنحفظ الدرس، رفع الفيديو ممكن ياخد وقت...</p>
-                }
-
-                <div class="flex gap-2">
                   <button
                     type="button"
-                    (click)="addLesson(section)"
-                    [disabled]="addingLesson()"
-                    class="cursor-pointer rounded-full bg-plum px-5 py-2 text-[13.5px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+                    (click)="saveRename(section)"
+                    [disabled]="sectionBusy()"
+                    class="cursor-pointer text-[12.5px] font-semibold text-plum"
                   >
-                    احفظ الدرس
+                    احفظ
                   </button>
                   <button
                     type="button"
-                    (click)="closeLessonForm()"
-                    [disabled]="addingLesson()"
-                    class="cursor-pointer rounded-full border border-line bg-white px-5 py-2 text-[13.5px] font-medium disabled:opacity-60"
+                    (click)="renamingId.set(null)"
+                    class="cursor-pointer text-[12.5px] text-muted"
                   >
                     إلغاء
                   </button>
-                </div>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="toggleFold(section.id)"
+                    class="min-w-0 flex-1 cursor-pointer text-start"
+                  >
+                    <span class="block truncate text-[16px] font-bold">{{ section.title }}</span>
+                    <span class="block text-[12px] text-muted">
+                      {{
+                        lessonsOf(section).length > 0
+                          ? lessonsOf(section).length + ' دروس'
+                          : 'لسه مفيش دروس'
+                      }}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="startRename(section)"
+                    class="cursor-pointer text-[12.5px] font-medium text-muted hover:text-plum"
+                  >
+                    تعديل
+                  </button>
+                  <button
+                    type="button"
+                    (click)="deletingId.set(section.id)"
+                    class="cursor-pointer text-[12.5px] font-medium text-muted hover:text-coral"
+                  >
+                    حذف
+                  </button>
+                  <button
+                    type="button"
+                    (click)="toggleFold(section.id)"
+                    [attr.aria-label]="folded().has(section.id) ? 'افتح القسم' : 'اقفل القسم'"
+                    class="cursor-pointer text-[12px] text-muted"
+                  >
+                    {{ folded().has(section.id) ? '▾' : '▴' }}
+                  </button>
+                }
               </div>
-            } @else {
-              <button
-                type="button"
-                (click)="openLessonForm(section)"
-                class="mt-3 cursor-pointer rounded-full border border-plum/40 px-4 py-2 text-[13px] font-semibold text-plum transition-colors hover:bg-art"
-              >
-                + ضيف درس
-              </button>
-            }
-          </section>
-        }
+
+              @if (deletingId() === section.id) {
+                <div
+                  class="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-alert-bg px-3.5 py-2.5 text-[13px] text-alert-ink"
+                >
+                  <span class="flex-1">تحذف القسم وكل دروسه؟ مينفعش ترجعهم.</span>
+                  <button
+                    type="button"
+                    (click)="removeSection(section)"
+                    [disabled]="sectionBusy()"
+                    class="cursor-pointer rounded-full bg-coral px-3.5 py-1.5 text-[12px] font-semibold text-white disabled:opacity-60"
+                  >
+                    {{ sectionBusy() ? 'بنحذف...' : 'أيوه، احذف' }}
+                  </button>
+                  <button
+                    type="button"
+                    (click)="deletingId.set(null)"
+                    class="cursor-pointer text-[12px] font-medium"
+                  >
+                    لأ
+                  </button>
+                </div>
+              }
+
+              @if (!folded().has(section.id)) {
+                <ul class="mt-3 divide-y divide-line border-t border-line">
+                  @for (lesson of lessonsOf(section); track lesson.id) {
+                    <li>
+                      <app-lesson-row [lesson]="lesson" (changed)="loadLessons(section.id)" />
+                    </li>
+                  } @empty {
+                    <li class="py-2.5 text-[13.5px] text-muted">
+                      {{ lessons()[section.id] ? 'القسم ده لسه فاضي.' : 'بنحمّل الدروس...' }}
+                    </li>
+                  }
+                </ul>
+
+                @if (openSectionId() === section.id) {
+                  <!-- ===== new lesson form ===== -->
+                  <div class="mt-3 grid gap-3 rounded-2xl bg-art/50 p-4">
+                    <label class="block">
+                      <span class="text-[13px] font-medium">اسم الدرس</span>
+                      <input
+                        type="text"
+                        [value]="lessonTitle()"
+                        (input)="lessonTitle.set($any($event.target).value)"
+                        class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
+                      />
+                    </label>
+
+                    <label class="block">
+                      <span class="text-[13px] font-medium">وصف قصير (اختياري)</span>
+                      <textarea
+                        rows="2"
+                        [value]="lessonDescription()"
+                        (input)="lessonDescription.set($any($event.target).value)"
+                        class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none focus:border-plum"
+                      ></textarea>
+                    </label>
+
+                    <div>
+                      <span class="text-[13px] font-medium">نوع الدرس</span>
+                      <div class="mt-1.5 flex flex-wrap gap-2">
+                        @for (kind of kinds; track kind.value) {
+                          <button
+                            type="button"
+                            (click)="chooseKind(kind.value)"
+                            [class]="
+                              lessonKind() === kind.value
+                                ? 'cursor-pointer rounded-full bg-plum px-4 py-1.5 text-[13px] font-semibold text-white'
+                                : 'cursor-pointer rounded-full border border-line bg-white px-4 py-1.5 text-[13px] font-medium text-ink'
+                            "
+                          >
+                            {{ kind.label }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+
+                    @if (lessonKind() === 'text') {
+                      <label class="block">
+                        <span class="text-[13px] font-medium">نص الدرس</span>
+                        <textarea
+                          rows="6"
+                          [value]="lessonText()"
+                          (input)="lessonText.set($any($event.target).value)"
+                          class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none focus:border-plum"
+                        ></textarea>
+                      </label>
+                    } @else {
+                      <label class="block">
+                        <span class="text-[13px] font-medium">
+                          {{ lessonKind() === 'video' ? 'ملف الفيديو' : 'ملف الـ PDF' }}
+                        </span>
+                        <input
+                          type="file"
+                          [accept]="lessonKind() === 'video' ? 'video/*' : 'application/pdf'"
+                          (change)="onFile($event)"
+                          class="mt-1.5 block w-full text-[13px]"
+                        />
+                      </label>
+                    }
+
+                    <label class="flex items-center gap-2 text-[13.5px]">
+                      <input
+                        type="checkbox"
+                        [checked]="lessonPreview()"
+                        (change)="lessonPreview.set($any($event.target).checked)"
+                      />
+                      درس مجاني، أي حد يقدر يشوفه قبل ما يشترك
+                    </label>
+
+                    @if (lessonError()) {
+                      <p class="text-[13px] text-red-700" role="alert">{{ lessonError() }}</p>
+                    }
+                    @if (addingLesson()) {
+                      <p class="text-[13px] text-muted">
+                        بنحفظ الدرس، رفع الفيديو ممكن ياخد وقت...
+                      </p>
+                    }
+
+                    <div class="flex gap-2">
+                      <button
+                        type="button"
+                        (click)="addLesson(section)"
+                        [disabled]="addingLesson()"
+                        class="cursor-pointer rounded-full bg-plum px-5 py-2 text-[13.5px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+                      >
+                        احفظ الدرس
+                      </button>
+                      <button
+                        type="button"
+                        (click)="closeLessonForm()"
+                        [disabled]="addingLesson()"
+                        class="cursor-pointer rounded-full border border-line bg-white px-5 py-2 text-[13.5px] font-medium disabled:opacity-60"
+                      >
+                        إلغاء
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="openLessonForm(section)"
+                    class="mt-3 cursor-pointer rounded-full border border-plum/40 px-4 py-2 text-[13px] font-semibold text-plum transition-colors hover:bg-art"
+                  >
+                    + ضيف درس
+                  </button>
+                }
+              }
+            </section>
+          }
+        </div>
+
+        <!-- Summary -->
+        <aside class="rounded-[22px] border border-line bg-white p-5 lg:sticky lg:top-20">
+          <h2 class="text-[16px] font-bold">ملخص المحتوى</h2>
+          <dl class="mt-3 divide-y divide-line text-[13.5px]">
+            <div class="flex justify-between py-2">
+              <dt>الأقسام</dt>
+              <dd class="font-bold">{{ summary().sections }}</dd>
+            </div>
+            <div class="flex justify-between py-2">
+              <dt>الدروس</dt>
+              <dd class="font-bold">{{ summary().lessons }}</dd>
+            </div>
+            <div class="flex justify-between py-2">
+              <dt>معاينة مجانية</dt>
+              <dd class="font-bold">{{ summary().free }}</dd>
+            </div>
+            <div class="flex justify-between py-2">
+              <dt>محتاجة رفع ملف</dt>
+              <dd class="font-bold text-[#8a5a00]">{{ summary().needFile }}</dd>
+            </div>
+          </dl>
+          @if (summary().needFile > 0) {
+            <p
+              class="mt-3 rounded-xl bg-[#fdf0d5] px-3.5 py-3 text-[12.5px] leading-6 text-[#8a5a00]"
+            >
+              فيه {{ summary().needFile }} درس لسه محتاج رفع الفيديو أو الملف بتاعه.
+            </p>
+          }
+        </aside>
       </div>
     }
   </main>
