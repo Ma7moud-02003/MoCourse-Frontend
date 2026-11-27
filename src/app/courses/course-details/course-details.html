@@ -212,6 +212,16 @@
                       <ul class="divide-y divide-line">
                         @for (lesson of lessonsOf(section); track lesson.id) {
                           <li class="flex items-center gap-3 py-2.5">
+                            <!-- a lesson he can open is a link to its own page;
+                                 the rest stay plain rows with a lock -->
+                            <a
+                              class="flex flex-1 items-center gap-3 rounded-lg transition-colors"
+                              [class.cursor-pointer]="canPlay(lesson)"
+                              [class.hover:bg-bg]="canPlay(lesson)"
+                              [routerLink]="
+                                canPlay(lesson) ? ['/courses', course()?.id, 'lessons', lesson.id] : null
+                              "
+                            >
                             <!-- a play sign for a lesson he can watch, a lock for the rest -->
                             <span
                               aria-hidden="true"
@@ -240,6 +250,7 @@
                               }
                             </span>
                             <span class="flex-1 text-[14px]">{{ lesson.title }}</span>
+                            </a>
                             @if (lesson.isPreview && !c.isEnrolled) {
                               <span
                                 class="rounded-full bg-mint-light px-2 py-0.5 text-[11px] font-bold text-mint"
