@@ -144,12 +144,74 @@
       <section class="mt-4 rounded-[22px] border border-line bg-white p-5 md:p-6">
         <h2 class="text-[17px] font-bold">أسئلة: {{ exam.title }}</h2>
 
+        <!-- ===== edit the exam (the backend refuses once a student started it) ===== -->
+        <form
+          class="mt-3 grid gap-3 rounded-2xl border border-line p-4"
+          (submit)="$event.preventDefault(); saveExam()"
+        >
+          <h3 class="text-[14.5px] font-bold">تعديل الامتحان</h3>
+          <label class="block">
+            <span class="text-[13px] font-medium">اسم الامتحان</span>
+            <input
+              type="text"
+              maxlength="150"
+              [value]="editTitle()"
+              (input)="editTitle.set($any($event.target).value)"
+              class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2 text-[14px] outline-none focus:border-plum"
+            />
+          </label>
+          <label class="block">
+            <span class="text-[13px] font-medium">وصف قصير</span>
+            <input
+              type="text"
+              [value]="editDescription()"
+              (input)="editDescription.set($any($event.target).value)"
+              class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2 text-[14px] outline-none focus:border-plum"
+            />
+          </label>
+          <label class="block max-w-[200px]">
+            <span class="text-[13px] font-medium">درجة النجاح (من 0 لـ 100)</span>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              [value]="editPassMark()"
+              (input)="editPassMark.set($any($event.target).value)"
+              class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2 text-[14px] outline-none focus:border-plum"
+            />
+          </label>
+          @if (examNote(); as note) {
+            <p
+              class="text-[13px]"
+              [class.text-mint]="note.ok"
+              [class.text-red-700]="!note.ok"
+              role="status"
+            >
+              {{ note.text }}
+            </p>
+          }
+          <button
+            type="submit"
+            [disabled]="savingExam()"
+            class="w-fit cursor-pointer rounded-full bg-plum px-5 py-2 text-[13.5px] font-semibold text-white disabled:opacity-60"
+          >
+            {{ savingExam() ? 'بنحفظ...' : 'احفظ التعديل' }}
+          </button>
+        </form>
+
         <ol class="mt-3 flex flex-col gap-3">
           @for (question of questions(); track question.id) {
             <li class="rounded-2xl bg-art/50 p-4">
               <p class="text-[14px] font-semibold">
                 {{ question.order }}. {{ question.question }}
                 <span class="text-[12.5px] font-normal text-muted">({{ question.mark }} درجة)</span>
+                <button
+                  type="button"
+                  (click)="editQuestion(question)"
+                  class="ms-2 cursor-pointer text-[12px] font-medium text-plum"
+                >
+                  تعديل
+                </button>
                 @if (!exam.isPublished) {
                   <button
                     type="button"
@@ -160,13 +222,73 @@
                   </button>
                 }
               </p>
-              <ul class="mt-2 flex flex-col gap-1 text-[13.5px]">
-                @for (choice of question.choices; track choice.id) {
-                  <li [class]="choice.isCorrect ? 'font-semibold text-plum' : 'text-muted'">
-                    {{ choice.isCorrect ? '✓' : '•' }} {{ choice.text }}
-                  </li>
-                }
-              </ul>
+              @if (editing()?.id === question.id) {
+                <div class="mt-3 grid gap-2 rounded-xl bg-white p-3">
+                  <input
+                    type="text"
+                    aria-label="نص السؤال"
+                    [value]="editText()"
+                    (input)="editText.set($any($event.target).value)"
+                    class="w-full rounded-xl border-[1.5px] border-line px-3.5 py-2 text-[14px] outline-none focus:border-plum"
+                  />
+                  <label class="block max-w-[160px] text-[13px]">
+                    الدرجة
+                    <input
+                      type="number"
+                      min="1"
+                      [value]="editMark()"
+                      (input)="editMark.set($any($event.target).value)"
+                      class="mt-1 w-full rounded-xl border-[1.5px] border-line px-3.5 py-2 text-[14px] outline-none focus:border-plum"
+                    />
+                  </label>
+                  @for (choice of editChoices(); track choice.id) {
+                    <div class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="correct-{{ question.id }}"
+                        aria-label="الإجابة الصح"
+                        [checked]="editCorrect() === choice.id"
+                        (change)="editCorrect.set(choice.id)"
+                      />
+                      <input
+                        type="text"
+                        [value]="choice.text"
+                        [disabled]="question.type === 'true_false'"
+                        (input)="setEditChoice(choice.id, $any($event.target).value)"
+                        class="w-full rounded-xl border-[1.5px] border-line px-3.5 py-2 text-[14px] outline-none focus:border-plum disabled:bg-bg"
+                      />
+                    </div>
+                  }
+                  @if (editError()) {
+                    <p class="text-[13px] text-red-700" role="alert">{{ editError() }}</p>
+                  }
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      (click)="saveQuestionEdit()"
+                      [disabled]="savingEdit()"
+                      class="cursor-pointer rounded-full bg-plum px-5 py-2 text-[13.5px] font-semibold text-white disabled:opacity-60"
+                    >
+                      {{ savingEdit() ? 'بنحفظ...' : 'احفظ السؤال' }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="cancelEditQuestion()"
+                      class="cursor-pointer rounded-full border border-line px-5 py-2 text-[13.5px] font-medium"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <ul class="mt-2 flex flex-col gap-1 text-[13.5px]">
+                  @for (choice of question.choices; track choice.id) {
+                    <li [class]="choice.isCorrect ? 'font-semibold text-plum' : 'text-muted'">
+                      {{ choice.isCorrect ? '✓' : '•' }} {{ choice.text }}
+                    </li>
+                  }
+                </ul>
+              }
             </li>
           } @empty {
             <li class="text-[13.5px] text-muted">لسه مفيش أسئلة. ضيف أول سؤال من تحت.</li>
