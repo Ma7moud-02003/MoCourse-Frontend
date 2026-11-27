@@ -2,14 +2,151 @@
   <app-header />
 
   <main class="mx-auto w-full max-w-[1120px] flex-1 px-5 pb-16">
-    <section class="mt-5 rounded-[22px] border border-line bg-white p-5 md:p-6">
-      <h1 class="text-[22px] font-bold leading-9">لوحة المدرّس</h1>
-      <p class="mt-1 text-[13.5px] leading-7 text-muted">
-        من هنا تتابع كورساتك، وتوافق على الطلبة اللي طالبين يشتركوا، وتكتب بيانات الدفع اللي هيحوّلوا عليها.
+    <!-- Greeting -->
+    <section class="mt-5 overflow-hidden rounded-[22px] bg-plum p-6 text-white md:p-8">
+      <h1 class="text-[24px] font-bold leading-10">أهلاً يا {{ name() }}</h1>
+      <p class="mt-1 text-[14px] leading-7 text-white/80">
+        عندك {{ numbers()?.wateing_aproave ?? 0 }} طلبات دفع مستنية موافقتك، وطلابك مستنيينك.
       </p>
     </section>
 
-    <div class="mt-5 grid gap-5 lg:grid-cols-2">
+    <!-- The numbers -->
+    @if (numbers(); as n) {
+      <div class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div class="rounded-[18px] border border-line bg-white p-4">
+          <p class="text-[12px] text-muted">كورساتك</p>
+          <p class="mt-1 text-[26px] font-bold">{{ n.coursesCount }}</p>
+        </div>
+        <div class="rounded-[18px] border border-line bg-white p-4">
+          <p class="text-[12px] text-muted">اشتراكات الطلاب</p>
+          <p class="mt-1 text-[26px] font-bold">{{ n.enrolledStudents }}</p>
+        </div>
+        <div class="rounded-[18px] border border-line bg-white p-4">
+          <p class="text-[12px] text-muted">نسبة اكتمال الطلاب</p>
+          <p class="mt-1 text-[26px] font-bold">{{ n.completionPercentage | number: '1.0-0' }}%</p>
+        </div>
+        <div class="rounded-[18px] bg-plum-dark p-4 text-white">
+          <p class="text-[12px] text-white/70">المبالغ المقبولة</p>
+          <p class="mt-1 text-[26px] font-bold">{{ n.totalProfite }} <span class="text-[13px] font-medium">ج.م</span></p>
+        </div>
+      </div>
+    }
+
+    <div class="mt-5 grid gap-5 lg:grid-cols-3">
+      <div class="lg:col-span-2">
+      <!-- ===== Students asking to join ===== -->
+      <section class="rounded-[22px] border border-line bg-white p-5">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-[17px] font-bold">طلبات الاشتراك</h2>
+          @if (requests().length > 0) {
+            <span class="rounded-full bg-art px-3 py-1 text-[12.5px] font-semibold text-plum">
+              {{ requests().length }} مستنية
+            </span>
+          }
+        </div>
+
+        @if (requestsLoading()) {
+          <p class="mt-3 text-[13.5px] text-muted">بنجيب الطلبات...</p>
+        } @else if (requestsNote()) {
+          <p class="mt-3 rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink">
+            {{ requestsNote() }}
+          </p>
+        } @else if (requests().length === 0) {
+          <p class="mt-3 rounded-xl bg-bg px-4 py-3 text-[13.5px] leading-7 text-muted">
+            مفيش طلبات مستنية موافقتك دلوقتي.
+          </p>
+        } @else {
+          <ul class="mt-3 space-y-3">
+            @for (request of requests(); track request.id) {
+              <li class="rounded-xl border border-line p-3">
+                <p class="text-[14px] font-semibold">{{ request.user.fullName }}</p>
+                <p class="mt-0.5 text-[12.5px] text-muted">{{ request.user.email }}</p>
+                <p class="mt-1 text-[13px] text-ink">
+                  عايز يشترك في: <span class="font-semibold">{{ request.course.title }}</span>
+                </p>
+                <p class="mt-1 text-[12.5px] text-muted">
+                  المبلغ {{ request.amount }} ج.م — {{ methodText(request.paymentMethod) }}
+                  @if (request.transactionId) {
+                    — رقم العملية {{ request.transactionId }}
+                  }
+                </p>
+
+                @if (request.thumbnail) {
+                  <a
+                    [href]="request.thumbnail"
+                    target="_blank"
+                    rel="noopener"
+                    class="mt-2 inline-block text-[12.5px] font-medium text-plum underline"
+                  >
+                    شوف صورة التحويل
+                  </a>
+                }
+
+                <label class="mt-3 flex cursor-pointer items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    class="size-4 accent-[#2fb58c]"
+                    [checked]="confirmed().has(request.id)"
+                    (change)="toggleConfirmed(request.id)"
+                  />
+                  اتأكدت إن المبلغ وصل حسابي
+                </label>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    (click)="decide(request, 'PAID')"
+                    [disabled]="deciding() === request.id || !confirmed().has(request.id)"
+                    class="cursor-pointer rounded-full bg-plum px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+                  >
+                    {{ deciding() === request.id ? 'بنحفظ...' : 'أكّد الاشتراك' }}
+                  </button>
+                  <button
+                    type="button"
+                    (click)="decide(request, 'FAILED')"
+                    [disabled]="deciding() === request.id"
+                    class="cursor-pointer rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink transition-colors hover:border-coral/50 hover:text-coral disabled:opacity-60"
+                  >
+                    ارفض
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (decideNote()) {
+          <p class="mt-3 rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink">
+            {{ decideNote() }}
+          </p>
+        }
+      </section>
+      </div>
+
+      <!-- The two small boxes beside the requests -->
+      <aside class="space-y-3">
+        <section class="rounded-[22px] border border-line bg-white p-5">
+          <h2 class="text-[16px] font-bold">الأكتر مبيعًا</h2>
+          @if (last()?.mostCoursePurshaced; as c) {
+            <p class="mt-3 text-[14px] font-semibold">{{ c.courseTitle }}</p>
+            <p class="mt-1 text-[12.5px] text-muted">{{ c.purchaseCount }} طلب</p>
+          } @else {
+            <p class="mt-3 text-[13px] text-muted">لسه مفيش مبيعات.</p>
+          }
+        </section>
+        <section class="rounded-[22px] border border-line bg-white p-5">
+          <h2 class="text-[16px] font-bold">أكتر درس اتكمّل</h2>
+          @if (last()?.mostCompletedLesson; as m) {
+            <p class="mt-3 text-[14px] font-semibold">{{ m.lessonTitle }}</p>
+            <p class="mt-1 text-[12.5px] text-muted">اتشاف {{ m.watchedCount }} مرة</p>
+          } @else {
+            <p class="mt-3 text-[13px] text-muted">لسه محدش خلّص درس.</p>
+          }
+        </section>
+      </aside>
+    </div>
+
+    <div class="mt-5">
       <!-- ===== His courses ===== -->
       <section class="rounded-[22px] border border-line bg-white p-5">
         <div class="flex items-center justify-between gap-3">
@@ -87,83 +224,6 @@
         }
       </section>
 
-      <!-- ===== Students asking to join ===== -->
-      <section class="rounded-[22px] border border-line bg-white p-5">
-        <div class="flex items-center justify-between gap-3">
-          <h2 class="text-[17px] font-bold">طلبات الاشتراك</h2>
-          @if (requests().length > 0) {
-            <span class="rounded-full bg-art px-3 py-1 text-[12.5px] font-semibold text-plum">
-              {{ requests().length }} مستنية
-            </span>
-          }
-        </div>
-
-        @if (requestsLoading()) {
-          <p class="mt-3 text-[13.5px] text-muted">بنجيب الطلبات...</p>
-        } @else if (requestsNote()) {
-          <p class="mt-3 rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink">
-            {{ requestsNote() }}
-          </p>
-        } @else if (requests().length === 0) {
-          <p class="mt-3 rounded-xl bg-bg px-4 py-3 text-[13.5px] leading-7 text-muted">
-            مفيش طلبات مستنية موافقتك دلوقتي.
-          </p>
-        } @else {
-          <ul class="mt-3 space-y-3">
-            @for (request of requests(); track request.id) {
-              <li class="rounded-xl border border-line p-3">
-                <p class="text-[14px] font-semibold">{{ request.user.fullName }}</p>
-                <p class="mt-0.5 text-[12.5px] text-muted">{{ request.user.email }}</p>
-                <p class="mt-1 text-[13px] text-ink">
-                  عايز يشترك في: <span class="font-semibold">{{ request.course.title }}</span>
-                </p>
-                <p class="mt-1 text-[12.5px] text-muted">
-                  المبلغ {{ request.amount }} ج.م — {{ methodText(request.paymentMethod) }}
-                  @if (request.transactionId) {
-                    — رقم العملية {{ request.transactionId }}
-                  }
-                </p>
-
-                @if (request.thumbnail) {
-                  <a
-                    [href]="request.thumbnail"
-                    target="_blank"
-                    rel="noopener"
-                    class="mt-2 inline-block text-[12.5px] font-medium text-plum underline"
-                  >
-                    شوف صورة التحويل
-                  </a>
-                }
-
-                <div class="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    (click)="decide(request, 'PAID')"
-                    [disabled]="deciding() === request.id"
-                    class="cursor-pointer rounded-full bg-plum px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
-                  >
-                    {{ deciding() === request.id ? 'بنحفظ...' : 'أكّد الاشتراك' }}
-                  </button>
-                  <button
-                    type="button"
-                    (click)="decide(request, 'FAILED')"
-                    [disabled]="deciding() === request.id"
-                    class="cursor-pointer rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink transition-colors hover:border-coral/50 hover:text-coral disabled:opacity-60"
-                  >
-                    ارفض
-                  </button>
-                </div>
-              </li>
-            }
-          </ul>
-        }
-
-        @if (decideNote()) {
-          <p class="mt-3 rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink">
-            {{ decideNote() }}
-          </p>
-        }
-      </section>
     </div>
 
     <!-- ===== Where his students send the money ===== -->
