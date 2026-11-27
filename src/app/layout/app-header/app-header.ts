@@ -11,9 +11,9 @@ import { NotificationService } from '../../core/notification.service';
   imports: [RouterLink, RouterLinkActive],
   template: `
     <header class="sticky top-0 z-20 border-b border-line bg-bg/85 backdrop-blur">
-      <div class="mx-auto flex h-16 w-full max-w-[1120px] items-center gap-3 px-5">
+      <div class="mx-auto flex h-16 w-full max-w-[1120px] items-center gap-2 px-3 sm:gap-3 sm:px-5">
         <!-- The logo leads home: the page that fits the role -->
-        <a routerLink="/" class="flex items-center gap-2 text-[19px] font-bold">
+        <a routerLink="/" class="hidden items-center gap-2 sm:flex text-[19px] font-bold">
           <img src="logo.svg" alt="" width="34" height="34" />
           <strong class="hidden sm:inline">MoCourse</strong>
         </a>
@@ -24,26 +24,26 @@ import { NotificationService } from '../../core/notification.service';
             <a
               routerLink="/courses"
               routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
-              class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
+              class="rounded-full px-2.5 py-2 text-[13px] font-medium text-muted sm:px-3.5 sm:text-sm transition-colors hover:text-plum"
               >الكورسات</a
             >
             <a
               routerLink="/my-courses"
               routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
-              class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
+              class="rounded-full px-2.5 py-2 text-[13px] font-medium text-muted sm:px-3.5 sm:text-sm transition-colors hover:text-plum"
               >كورساتي</a
             >
             <a
               routerLink="/certificates"
               routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
-              class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
+              class="rounded-full px-2.5 py-2 text-[13px] font-medium text-muted sm:px-3.5 sm:text-sm transition-colors hover:text-plum"
               >شهاداتي</a
             >
           } @else {
             <a
               routerLink="/teacher"
               routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
-              class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
+              class="rounded-full px-2.5 py-2 text-[13px] font-medium text-muted sm:px-3.5 sm:text-sm transition-colors hover:text-plum"
               >كورساتي</a
             >
           }
@@ -53,7 +53,7 @@ import { NotificationService } from '../../core/notification.service';
         <a
           routerLink="/notifications"
           routerLinkActive="text-plum"
-          class="relative ms-auto flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:border-plum/40 hover:text-plum"
+          class="relative ms-auto flex size-9 shrink-0 sm:size-10 items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:border-plum/40 hover:text-plum"
           [attr.aria-label]="
             notifications.unread() > 0
               ? 'الإشعارات، ' + notifications.unread() + ' جديد'
@@ -83,11 +83,34 @@ import { NotificationService } from '../../core/notification.service';
           }
         </a>
 
+        <!-- His own account -->
+        <a
+          routerLink="/profile"
+          routerLinkActive="text-plum"
+          aria-label="حسابي"
+          class="flex size-9 shrink-0 sm:size-10 items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:border-plum/40 hover:text-plum"
+        >
+          <svg
+            aria-hidden="true"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+          </svg>
+        </a>
+
         <button
           type="button"
           (click)="auth.logout()"
           aria-label="تسجيل خروج"
-          class="flex cursor-pointer items-center gap-2 rounded-full border border-line bg-white px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum"
+          class="flex cursor-pointer items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-sm font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum"
         >
           <!-- a small door-with-arrow icon -->
           <svg
