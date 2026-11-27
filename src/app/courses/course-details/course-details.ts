@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
 import { CourseDetails, CourseService } from '../../core/course.service';
 import { CurriculumService, Lesson, Section } from '../../core/curriculum.service';
 import { finalPrice, hasDiscount, lessonTime, priceText } from '../../core/course-display';
@@ -8,12 +9,13 @@ import { errorMessage } from '../../core/error-message';
 import { Quiz, QuizService } from '../../core/quiz.service';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
+import { CourseEnroll } from './course-enroll/course-enroll';
 
 // One course page: what the course is about, who teaches it, and its content
 // (sections, and the lessons inside each section).
 @Component({
   selector: 'app-course-details',
-  imports: [RouterLink, AppHeader, AppFooter],
+  imports: [RouterLink, AppHeader, AppFooter, CourseEnroll],
   templateUrl: './course-details.html',
 })
 export class CourseDetailsPage implements OnInit {
@@ -21,6 +23,7 @@ export class CourseDetailsPage implements OnInit {
   private courseService = inject(CourseService);
   private curriculum = inject(CurriculumService);
   private quizService = inject(QuizService);
+  private auth = inject(AuthService);
 
   // helpers the template uses to show a price and a lesson length
   readonly priceText = priceText;
@@ -133,6 +136,12 @@ export class CourseDetailsPage implements OnInit {
         );
       },
     });
+  }
+
+  // The join card is only for a student who is not in the course yet.
+  canJoin(): boolean {
+    const course = this.course();
+    return this.auth.role() === 'student' && !!course && !course.isEnrolled && !course.canAccess;
   }
 
   lessonsOf(section: Section): Lesson[] {
