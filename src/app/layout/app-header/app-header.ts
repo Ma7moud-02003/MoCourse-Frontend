@@ -21,6 +21,7 @@ const ICONS = {
   certificate: 'M12 3a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM8.5 14L7 22l5-3 5 3-1.5-8',
   requests: 'M4 6h16v12H4zM4 9h16M8 14h4',
   students: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20c0-3 3-5 6-5s6 2 6 5M16 11a3 3 0 1 0 0-6M18 15c2 .5 3 2 3 5',
+  exams: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5',
   wallet: 'M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7l12-3v3M16 13h3',
   profile: 'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4 21c0-4 4-6 8-6s8 2 8 6',
 };
@@ -37,6 +38,7 @@ const TEACHER_LINKS: NavItem[] = [
   { label: 'الرئيسية', path: '/teacher', icon: ICONS.home, exact: true },
   { label: 'الطلبات', path: '/teacher/requests', icon: ICONS.requests, badge: true },
   { label: 'طلابي', path: '/teacher/students', icon: ICONS.students },
+  { label: 'الامتحانات', path: '/teacher/exams', icon: ICONS.exams },
   { label: 'الدفع', path: '/teacher/payment-info', icon: ICONS.wallet },
   { label: 'حسابي', path: '/profile', icon: ICONS.profile },
 ];
