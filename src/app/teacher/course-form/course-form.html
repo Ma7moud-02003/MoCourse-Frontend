@@ -23,9 +23,13 @@
     </a>
 
     <section class="mt-4 rounded-[22px] border border-line bg-white p-5 md:p-6">
-      <h1 class="text-[21px] font-bold leading-9">كورس جديد</h1>
+      <h1 class="text-[21px] font-bold leading-9">{{ courseId === null ? 'كورس جديد' : 'تعديل الكورس' }}</h1>
       <p class="mt-1 text-[13.5px] leading-7 text-muted">
-        اكتب بيانات الكورس، وبعد ما تحفظ هتقدر تضيف أقسام ودروس وامتحانات من صفحة الكورس.
+        @if (courseId === null) {
+          اكتب بيانات الكورس، وبعد ما تحفظ هتقدر تضيف أقسام ودروس وامتحانات من لوحة المدرّس.
+        } @else {
+          غيّر اللي عايزه واحفظ. لو مغيّرتش الصورة هتفضل زي ما هي.
+        }
       </p>
 
       <div class="mt-5 grid gap-4 md:grid-cols-2">
@@ -140,6 +144,9 @@
 
         <label class="block md:col-span-2">
           <span class="text-[13px] font-medium">صورة الكورس</span>
+          @if (currentThumbnail()) {
+            <img [src]="currentThumbnail()" alt="صورة الكورس الحالية" class="mt-2 h-24 rounded-xl object-cover" />
+          }
           <input
             type="file"
             accept="image/*"
@@ -163,7 +170,7 @@
           [disabled]="saving()"
           class="cursor-pointer rounded-full bg-plum px-6 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
         >
-          {{ saving() ? 'بنحفظ الكورس...' : 'احفظ الكورس' }}
+          {{ saving() ? 'بنحفظ الكورس...' : courseId === null ? 'احفظ الكورس' : 'احفظ التعديلات' }}
         </button>
         <a routerLink="/teacher" class="text-[13.5px] font-medium text-muted hover:text-plum">إلغاء</a>
       </div>
