@@ -42,8 +42,11 @@ body.has-shell {
   }
   body.has-shell main,
   body.has-shell app-footer footer > div {
-    margin-inline-start: 220px;
-    margin-inline-end: auto;
+    /* Centered in the whole page, then moved over by half the side menu,
+       so narrow pages sit in the middle of the free space. */
+    margin-inline: auto;
+    position: relative;
+    inset-inline-start: 110px;
     width: calc(100% - 220px);
   }
 }
