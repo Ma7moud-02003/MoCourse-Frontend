@@ -77,6 +77,10 @@
                   playsinline
                   preload="metadata"
                   [src]="item.videoUrl"
+                  (loadedmetadata)="onVideoReady(video)"
+                  (timeupdate)="saveVideo(video, false)"
+                  (pause)="saveVideo(video, true)"
+                  #video
                 ></video>
               } @else {
                 <p class="mt-5 rounded-xl bg-bg px-4 py-3 text-[14px] text-muted">
@@ -118,6 +122,22 @@
                 </p>
               }
             }
+
+            <!-- ===== Finished? A video counts by itself; a PDF or text needs a tap ===== -->
+            @if (done()) {
+              <p class="mt-5 rounded-xl bg-mint-light px-4 py-3 text-[14px] font-semibold text-mint">
+                ✓ خلصت الدرس ده
+              </p>
+            } @else if (item.type !== 'video') {
+              <button
+                type="button"
+                (click)="finishLesson()"
+                [disabled]="savingDone()"
+                class="mt-5 rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white disabled:opacity-60"
+              >
+                {{ savingDone() ? 'بنسجّل...' : 'خلصت الدرس' }}
+              </button>
+            }
           </section>
 
           <!-- ===== The lesson before and after this one ===== -->
@@ -150,6 +170,24 @@
           <aside class="lg:w-[300px] lg:shrink-0">
             <div class="rounded-[22px] border border-line bg-white p-4 lg:sticky lg:top-5">
               <p class="text-[13.5px] font-semibold">دروس الكورس</p>
+
+              @if (courseProgress(); as cp) {
+                <div class="mt-2">
+                  <p class="text-[12px] text-muted">
+                    خلصت {{ cp.completedLessons }} من {{ cp.totalLesoons }} دروس
+                  </p>
+                  <div
+                    class="mt-1.5 h-2 overflow-hidden rounded-full bg-bg"
+                    role="progressbar"
+                    aria-label="تقدمك في الكورس"
+                    [attr.aria-valuenow]="cp.persentage"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    <div class="h-full rounded-full bg-mint" [style.width.%]="cp.persentage"></div>
+                  </div>
+                </div>
+              }
 
               @for (group of outline(); track group.section.id) {
                 <div class="mt-3">

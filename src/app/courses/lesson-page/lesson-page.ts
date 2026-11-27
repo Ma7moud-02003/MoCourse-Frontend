@@ -5,6 +5,7 @@ import { CurriculumService, Lesson, Section } from '../../core/curriculum.servic
 import { lessonTime } from '../../core/course-display';
 import { errorMessage } from '../../core/error-message';
 import { LessonDetails, LessonService } from '../../core/lesson.service';
+import { CourseProgress, ProgressService } from '../../core/progress.service';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
 
@@ -24,6 +25,7 @@ export class LessonPage implements OnInit {
   private route = inject(ActivatedRoute);
   private lessons = inject(LessonService);
   private curriculum = inject(CurriculumService);
+  private progress = inject(ProgressService);
 
   lesson = signal<LessonDetails | null>(null);
   loading = signal(true);
@@ -38,6 +40,13 @@ export class LessonPage implements OnInit {
   previousLesson = computed(() => this.neighbour(-1));
   nextLesson = computed(() => this.neighbour(1));
   private allLessons = computed(() => this.outline().flatMap((group) => group.lessons));
+
+  // Progress. It stays empty for a lesson he cannot track (a preview before he joins).
+  done = signal(false);
+  courseProgress = signal<CourseProgress | null>(null);
+  savingDone = signal(false);
+  private startAt = 0; // the second to open the video at
+  private lastSaved = 0; // when we last sent the video position (ms)
 
   // helpers the template uses
   readonly lessonTime = lessonTime;
@@ -58,6 +67,7 @@ export class LessonPage implements OnInit {
         this.lesson.set(lesson);
         this.loading.set(false);
         this.loadOutline(this.courseId);
+        this.loadProgress();
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
@@ -71,6 +81,63 @@ export class LessonPage implements OnInit {
         }
       },
     });
+  }
+
+  // What he finished so far: this lesson, and the whole course.
+  private loadProgress() {
+    this.progress.lesson(this.lessonId).subscribe({
+      next: (p) => {
+        this.done.set(p.completed);
+        // A finished video starts from the beginning. An unfinished one continues where he stopped.
+        this.startAt = p.completed ? 0 : p.lastPosition;
+      },
+      // 401 here just means he is not enrolled, so there is nothing to track
+      error: () => undefined,
+    });
+    this.refreshCourseProgress();
+  }
+
+  private refreshCourseProgress() {
+    this.progress.course(this.courseId).subscribe({
+      next: (p) => this.courseProgress.set(p),
+      error: () => this.courseProgress.set(null),
+    });
+  }
+
+  // The video is ready: jump to the second he stopped at.
+  onVideoReady(video: HTMLVideoElement) {
+    if (this.startAt > 5 && this.startAt < video.duration - 5) video.currentTime = this.startAt;
+  }
+
+  // Send the video position. While playing we send it every 15 seconds; on pause or end, at once.
+  saveVideo(video: HTMLVideoElement, now: boolean) {
+    if (!now && Date.now() - this.lastSaved < 15000) return;
+    if (video.currentTime < 1) return;
+    this.lastSaved = Date.now();
+    this.progress.save(this.lessonId, video.currentTime).subscribe({
+      next: (p) => this.markDone(p.completed),
+      error: () => undefined,
+    });
+  }
+
+  // A PDF or a written lesson: the student tells us he finished it.
+  finishLesson() {
+    this.savingDone.set(true);
+    this.progress.save(this.lessonId, 0, true).subscribe({
+      next: (p) => {
+        this.savingDone.set(false);
+        this.markDone(p.completed);
+      },
+      error: () => this.savingDone.set(false),
+    });
+  }
+
+  // Only refresh the course bar when this lesson just turned done.
+  private markDone(completed: boolean) {
+    if (completed && !this.done()) {
+      this.done.set(true);
+      this.refreshCourseProgress();
+    }
   }
 
   // The outline beside the lesson: the sections of the course and the lessons inside each one.
