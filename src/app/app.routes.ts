@@ -27,6 +27,18 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./courses/course-details/course-details').then((m) => m.CourseDetailsPage),
   },
+  {
+    // the teacher area: where a teacher lands after login
+    path: 'teacher',
+    canActivate: [authGuard],
+    loadComponent: () => import('./teacher/teacher-home').then((m) => m.TeacherHome),
+  },
+  {
+    // the admin area: where an admin lands after login
+    path: 'admin',
+    canActivate: [authGuard],
+    loadComponent: () => import('./admin/admin-home').then((m) => m.AdminHome),
+  },
   // the old home page is gone; its address now opens the courses page
   { path: 'home', pathMatch: 'full', redirectTo: 'courses' },
   { path: '**', redirectTo: 'courses' },
