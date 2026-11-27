@@ -47,7 +47,7 @@
               <p class="text-[12px] text-muted">الدرجة الكلية</p>
             </div>
             <div class="rounded-[14px] bg-[#fdeee9] px-4 py-3">
-              <p class="text-[26px] font-bold text-[#a3402a]">{{ q.passMark }}</p>
+              <p class="text-[26px] font-bold text-[#a3402a]">{{ q.passMark }}%</p>
               <p class="text-[12px] text-muted">درجة النجاح</p>
             </div>
             <div class="rounded-[14px] bg-bg px-4 py-3">
@@ -157,7 +157,7 @@
           {{ r.passed ? 'نجحت، مبروك!' : 'لسه محتاج درجة أعلى' }}
         </p>
         <p class="relative mt-1 text-[13px] text-white/80">
-          درجة النجاح {{ r.passMark }} من {{ r.totalMarks }}.
+          درجة النجاح {{ r.passMark }}% من إجمالي الدرجات.
         </p>
 
         <div class="relative mt-5 grid grid-cols-3 gap-2">
@@ -166,7 +166,7 @@
             <p class="text-[11px] text-white/80">درجتك</p>
           </div>
           <div class="rounded-[12px] bg-white/10 px-2 py-3">
-            <p class="text-[20px] font-bold">{{ r.passMark }}</p>
+            <p class="text-[20px] font-bold">{{ r.passMark }}%</p>
             <p class="text-[11px] text-white/80">المطلوب</p>
           </div>
           <div class="rounded-[12px] bg-white/10 px-2 py-3">
@@ -213,9 +213,7 @@
                 <span class="rounded-full bg-bg px-3 py-1"
                   >مدة الامتحان {{ info.timeLimit }} دقيقة</span
                 >
-                <span class="rounded-full bg-bg px-3 py-1">
-                  النجاح {{ info.passMark }} من {{ info.totalMarks }}
-                </span>
+                <span class="rounded-full bg-bg px-3 py-1"> النجاح {{ info.passMark }}% </span>
               </div>
             }
           </section>
