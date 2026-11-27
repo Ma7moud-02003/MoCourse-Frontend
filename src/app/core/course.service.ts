@@ -47,6 +47,9 @@ export interface CourseDetails extends CourseCard {
 export interface CourseFilters {
   title?: string;
   level?: CourseLevel | '';
+  categoryId?: number | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
   page?: number;
   limit?: number;
 }
@@ -85,6 +88,9 @@ export class CourseService {
     const title = filters.title?.trim();
     if (title) params = params.set('title', title);
     if (filters.level) params = params.set('level', filters.level);
+    if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
+    if (filters.minPrice) params = params.set('minPrice', filters.minPrice);
+    if (typeof filters.maxPrice === 'number') params = params.set('maxPrice', filters.maxPrice);
 
     params = params.set('page', filters.page ?? 1).set('limit', filters.limit ?? 9);
 
