@@ -1,18 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseService } from '../../core/course.service';
 import { CurriculumService, Lesson, Section } from '../../core/curriculum.service';
 import { errorMessage } from '../../core/error-message';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
+import { LessonRow } from './lesson-row/lesson-row';
 
 type LessonKind = 'video' | 'pdf' | 'text';
 
 // The teacher builds his course here: he adds sections, and lessons inside each section.
 @Component({
   selector: 'app-course-content',
-  imports: [RouterLink, AppHeader, AppFooter],
+  imports: [RouterLink, AppHeader, AppFooter, LessonRow],
   templateUrl: './course-content.html',
 })
 export class CourseContent implements OnInit {
@@ -22,11 +23,92 @@ export class CourseContent implements OnInit {
 
   courseId = 0;
   courseTitle = signal('');
+  courseThumbnail = signal('');
+  coursePublished = signal(true);
   sections = signal<Section[]>([]);
   // the lessons of each section, by section id
   lessons = signal<Record<number, Lesson[]>>({});
   loading = signal(true);
   loadFailed = signal(false);
+
+  // the numbers of the summary card
+  summary = computed(() => {
+    const all = Object.values(this.lessons()).flat();
+    const needFile = all.filter(
+      (l) => (l.type === 'video' && !l.videoUrl) || (l.type === 'pdf' && !l.pdfUrl),
+    ).length;
+    return {
+      sections: this.sections().length,
+      lessons: all.length,
+      free: all.filter((l) => l.isPreview).length,
+      needFile,
+    };
+  });
+
+  // the sections he folded, so only their title shows
+  folded = signal<Set<number>>(new Set());
+
+  toggleFold(id: number) {
+    this.folded.update((set) => {
+      const next = new Set(set);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
+
+  // renaming and deleting a section
+  renamingId = signal<number | null>(null);
+  renameText = signal('');
+  deletingId = signal<number | null>(null);
+  sectionBusy = signal(false);
+  sectionNote = signal('');
+  showSectionForm = signal(false);
+
+  startRename(section: Section) {
+    this.renamingId.set(section.id);
+    this.renameText.set(section.title);
+    this.sectionNote.set('');
+  }
+
+  saveRename(section: Section) {
+    const title = this.renameText().trim();
+    if (title.length < 5 || title.length > 150) {
+      this.sectionNote.set('اسم القسم لازم يكون بين 5 و150 حرف.');
+      return;
+    }
+    this.sectionBusy.set(true);
+    this.curriculum.renameSection(section.id, title).subscribe({
+      next: () => {
+        this.sections.update((list) =>
+          list.map((s) => (s.id === section.id ? { ...s, title } : s)),
+        );
+        this.sectionBusy.set(false);
+        this.renamingId.set(null);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.sectionBusy.set(false);
+        this.sectionNote.set(this.saveError(err));
+      },
+    });
+  }
+
+  // The backend refuses when a student already took an exam inside the section.
+  removeSection(section: Section) {
+    this.sectionBusy.set(true);
+    this.sectionNote.set('');
+    this.curriculum.deleteSection(section.id).subscribe({
+      next: () => {
+        this.sections.update((list) => list.filter((s) => s.id !== section.id));
+        this.sectionBusy.set(false);
+        this.deletingId.set(null);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.sectionBusy.set(false);
+        this.deletingId.set(null);
+        this.sectionNote.set(this.saveError(err));
+      },
+    });
+  }
 
   // new section
   sectionTitle = signal('');
@@ -53,7 +135,11 @@ export class CourseContent implements OnInit {
   ngOnInit() {
     this.courseId = Number(this.route.snapshot.paramMap.get('id'));
     this.courses.details(this.courseId).subscribe({
-      next: (course) => this.courseTitle.set(course.title),
+      next: (course) => {
+        this.courseTitle.set(course.title);
+        this.courseThumbnail.set(course.thumbnail);
+        this.coursePublished.set(course.isPublished);
+      },
       error: () => this.courseTitle.set(''),
     });
     this.loadSections();
@@ -73,7 +159,7 @@ export class CourseContent implements OnInit {
     });
   }
 
-  private loadLessons(sectionId: number) {
+  loadLessons(sectionId: number) {
     this.curriculum.lessons(sectionId).subscribe({
       next: (list) => this.lessons.update((all) => ({ ...all, [sectionId]: list })),
     });
@@ -101,6 +187,7 @@ export class CourseContent implements OnInit {
         this.lessons.update((all) => ({ ...all, [section.id]: [] }));
         this.sectionTitle.set('');
         this.addingSection.set(false);
+        this.showSectionForm.set(false);
       },
       error: (err: HttpErrorResponse) => {
         this.addingSection.set(false);
@@ -143,9 +230,7 @@ export class CourseContent implements OnInit {
     const wanted = this.lessonKind() === 'video' ? 'video/' : 'application/pdf';
     if (!file.type.startsWith(wanted)) {
       input.value = '';
-      this.lessonError.set(
-        this.lessonKind() === 'video' ? 'اختار ملف فيديو.' : 'اختار ملف PDF.',
-      );
+      this.lessonError.set(this.lessonKind() === 'video' ? 'اختار ملف فيديو.' : 'اختار ملف PDF.');
       return;
     }
     this.lessonFile.set(file);
@@ -183,9 +268,7 @@ export class CourseContent implements OnInit {
               // the lesson exists already, so we say that, and show the list again
               this.addingLesson.set(false);
               this.loadLessons(section.id);
-              this.lessonError.set(
-                'الدرس اتحفظ، بس الملف ما اترفعش. ' + this.saveError(err),
-              );
+              this.lessonError.set('الدرس اتحفظ، بس الملف ما اترفعش. ' + this.saveError(err));
             },
           });
         },
