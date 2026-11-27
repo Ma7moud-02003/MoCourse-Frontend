@@ -1,0 +1,150 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { errorMessage } from '../../core/error-message';
+import { QuizQuestion, QuizResult, QuizService } from '../../core/quiz.service';
+import { AppFooter } from '../../layout/app-footer/app-footer';
+import { AppHeader } from '../../layout/app-header/app-header';
+
+// Taking one exam: one question at a time, an answer saved as soon as it is picked,
+// then the score at the end.
+@Component({
+  selector: 'app-quiz-page',
+  imports: [RouterLink, AppHeader, AppFooter],
+  templateUrl: './quiz-page.html',
+})
+export class QuizPage implements OnInit {
+  private route = inject(ActivatedRoute);
+  private quizzes = inject(QuizService);
+
+  // where we came from, for the "back to the course" link
+  courseId = 0;
+
+  loading = signal(true);
+  errorText = signal('');
+
+  attemptId = signal<number | null>(null);
+  questions = signal<QuizQuestion[]>([]);
+  // the choice the student picked for each question: questionId -> choiceId
+  picked = signal<Record<number, number>>({});
+  current = signal(0); // which question is on screen
+  saving = signal(false);
+  submitting = signal(false);
+  result = signal<QuizResult | null>(null);
+
+  ngOnInit() {
+    this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+    const quizId = Number(this.route.snapshot.paramMap.get('quizId'));
+
+    if (!quizId) {
+      this.loading.set(false);
+      this.errorText.set('الامتحان مش موجود.');
+      return;
+    }
+
+    // Starting also tells us whether he already has an attempt: open (continue it)
+    // or finished (show the score straight away).
+    this.quizzes.start(quizId).subscribe({
+      next: (answer) => {
+        if (answer.kind === 'finished' && answer.result) {
+          this.result.set(answer.result);
+          this.loading.set(false);
+          return;
+        }
+        const id = answer.attempt?.id;
+        if (!id) {
+          this.loading.set(false);
+          this.errorText.set('حصلت مشكلة في بدء الامتحان. جرّب تاني.');
+          return;
+        }
+        this.attemptId.set(id);
+        this.loadAnswers(answer.answers ?? []);
+        this.loadQuestions(id);
+      },
+      error: (err: HttpErrorResponse) => this.showStartError(err),
+    });
+  }
+
+  private loadQuestions(attemptId: number) {
+    this.quizzes.questions(attemptId).subscribe({
+      next: (data) => {
+        this.questions.set(data.questions);
+        this.loading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.loading.set(false);
+        this.errorText.set(errorMessage(err));
+      },
+    });
+  }
+
+  // Answers he saved before (when an attempt was resumed) are already chosen.
+  private loadAnswers(answers: { questionId: number; choiceId: number }[]) {
+    const map: Record<number, number> = {};
+    for (const answer of answers) map[answer.questionId] = answer.choiceId;
+    this.picked.set(map);
+  }
+
+  private showStartError(err: HttpErrorResponse) {
+    this.loading.set(false);
+    if (err.status === 403) {
+      this.errorText.set('الامتحان ده للطلبة المشتركين في الكورس. اشترك الأول وبعدها تقدر تدخله.');
+    } else if (err.status === 409) {
+      this.errorText.set('الامتحان مش مفتوح دلوقتي. اسأل المدرّس عن ميعاده.');
+    } else {
+      this.errorText.set(errorMessage(err));
+    }
+  }
+
+  // Picking a choice saves it right away, so a refresh does not lose the answer.
+  choose(question: QuizQuestion, choiceId: number) {
+    const attemptId = this.attemptId();
+    if (!attemptId) return;
+
+    this.picked.update((all) => ({ ...all, [question.id]: choiceId }));
+    this.saving.set(true);
+    this.quizzes.saveAnswer(attemptId, question.id, choiceId).subscribe({
+      next: () => this.saving.set(false),
+      error: () => this.saving.set(false),
+    });
+  }
+
+  pickedChoice(questionId: number): number | null {
+    return this.picked()[questionId] ?? null;
+  }
+
+  answeredCount(): number {
+    return Object.keys(this.picked()).length;
+  }
+
+  next() {
+    if (this.current() < this.questions().length - 1) this.current.update((i) => i + 1);
+  }
+
+  previous() {
+    if (this.current() > 0) this.current.update((i) => i - 1);
+  }
+
+  // Hand the exam in. The backend grades it and sends the score back.
+  submit() {
+    const attemptId = this.attemptId();
+    if (!attemptId) return;
+
+    this.submitting.set(true);
+    this.quizzes.submit(attemptId).subscribe({
+      next: (result) => {
+        this.result.set(result);
+        this.submitting.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.submitting.set(false);
+        this.errorText.set(errorMessage(err));
+      },
+    });
+  }
+
+  // A friendly line for the score card: "نجحت" or "لسه محتاج درجة أعلى".
+  passedText(result: QuizResult): string {
+    return result.passed ? 'مبروك، نجحت في الامتحان.' : 'لسه محتاج درجة أعلى، جرّب تراجع الدرس وتاني مرة.';
+  }
+}
