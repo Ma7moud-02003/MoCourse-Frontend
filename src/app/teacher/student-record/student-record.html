@@ -1,0 +1,158 @@
+<div class="flex min-h-dvh flex-col">
+  <app-header />
+
+  <main class="mx-auto w-full max-w-[1000px] flex-1 px-5 pb-16">
+    <p class="mt-5 text-[12.5px] text-muted">
+      <a routerLink="/teacher/students" class="hover:text-plum">طلابي</a> ‹
+      {{ student()?.user?.fullName }}
+    </p>
+
+    @if (failed()) {
+      <p class="mt-6 text-[14px] text-muted">
+        مقدرناش نحمّل سجل الطالب. تأكد إنه في كورس من كورساتك وجرّب تاني.
+      </p>
+    } @else if (loading()) {
+      <p class="mt-6 text-[14px] text-muted">بنحمّل السجل...</p>
+    } @else {
+      <div class="mt-4 grid gap-4 lg:grid-cols-[290px_1fr] lg:items-start">
+        <!-- The student card with the ring -->
+        <aside class="overflow-hidden rounded-[22px] border border-line bg-white text-center">
+          <div class="h-16 bg-plum"></div>
+          <div class="-mt-8 px-5 pb-5">
+            <span
+              class="mx-auto flex size-16 items-center justify-center rounded-full border-4 border-white bg-art text-[22px] font-bold text-plum"
+            >
+              {{ student()?.user?.fullName?.charAt(0) }}
+            </span>
+            <p class="mt-2 text-[18px] font-bold">{{ student()?.user?.fullName }}</p>
+            <span
+              class="mt-1 inline-block rounded-full px-3 py-0.5 text-[12px] font-medium"
+              [class]="
+                student()?.status === 'completed' ? 'bg-mint-light text-mint' : 'bg-art text-plum'
+              "
+            >
+              {{ student()?.status === 'completed' ? 'أكمل الكورس' : 'بيتعلّم' }}
+            </span>
+
+            <div
+              class="mx-auto mt-4 flex size-36 items-center justify-center rounded-full"
+              [style.background]="ring()"
+            >
+              <div
+                class="flex size-[116px] flex-col items-center justify-center rounded-full bg-white"
+              >
+                <span class="text-[28px] font-bold text-plum"
+                  >{{ round(record()?.persentage ?? 0) }}%</span
+                >
+                <span class="text-[11px] text-muted">تقدّم الكورس</span>
+              </div>
+            </div>
+            <p class="mt-3 text-[12.5px] text-muted">
+              في كورس <b class="text-ink">{{ courseTitle() }}</b>
+            </p>
+          </div>
+        </aside>
+
+        <div class="space-y-4">
+          <!-- Tiles -->
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div class="rounded-2xl bg-white p-3.5">
+              <p class="text-[20px] font-bold text-plum">
+                {{ record()?.completedLessons }}/{{ record()?.totalLessons }}
+              </p>
+              <p class="text-[11.5px] text-muted">درس خلّصه</p>
+            </div>
+            <div class="rounded-2xl bg-white p-3.5">
+              <p class="text-[20px] font-bold text-mint">{{ passedExams() }}/{{ rows().length }}</p>
+              <p class="text-[11.5px] text-muted">امتحانات نجح فيها</p>
+            </div>
+            <div class="rounded-2xl bg-[#fbe9e4] p-3.5">
+              <p class="text-[20px] font-bold text-[#b24a32]">{{ rows().length }}</p>
+              <p class="text-[11.5px] text-[#b24a32]">امتحانات منشورة</p>
+            </div>
+          </div>
+
+          <!-- Lessons by section -->
+          <section class="rounded-[22px] border border-line bg-white p-5">
+            <h2 class="text-[16px] font-bold">الدروس</h2>
+            <p class="text-[12.5px] text-muted">اللي خلّصه الطالب في كل قسم.</p>
+            @for (group of groups(); track group.title) {
+              <div class="mt-4 border-t border-line pt-3">
+                <p class="flex justify-between text-[14px] font-bold">
+                  {{ group.title }}
+                  <span class="text-[12px] font-normal text-muted"
+                    >{{ group.done }}/{{ group.lessons.length }}</span
+                  >
+                </p>
+                <ul class="mt-2 space-y-1.5">
+                  @for (lesson of group.lessons; track lesson.lessonId) {
+                    <li
+                      class="flex items-center gap-2.5 rounded-lg px-2 py-1 text-[13.5px]"
+                      [class]="
+                        stoppedAt() === lesson.lessonId
+                          ? 'bg-[#fbe9e4] font-semibold'
+                          : lesson.completed
+                            ? ''
+                            : 'text-muted'
+                      "
+                    >
+                      <span
+                        class="flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] text-white"
+                        [class]="
+                          lesson.completed
+                            ? 'bg-mint'
+                            : stoppedAt() === lesson.lessonId
+                              ? 'bg-coral'
+                              : 'border border-line'
+                        "
+                      >
+                        {{ lesson.completed ? '✓' : stoppedAt() === lesson.lessonId ? '▶' : '' }}
+                      </span>
+                      <span class="flex-1">{{ lesson.title }}</span>
+                      @if (stoppedAt() === lesson.lessonId) {
+                        <span class="text-[11.5px] text-coral">هنا وقف</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </section>
+
+          <!-- Exams -->
+          <section class="rounded-[22px] border border-line bg-white p-5">
+            <h2 class="text-[16px] font-bold">الامتحانات</h2>
+            <p class="text-[12.5px] text-muted">نتيجة الطالب في كل امتحان منشور.</p>
+            @if (rows().length === 0) {
+              <p class="mt-3 text-[13.5px] text-muted">مفيش امتحانات منشورة في الكورس ده.</p>
+            } @else {
+              <ul class="mt-3 divide-y divide-line">
+                @for (row of rows(); track row.exam.id) {
+                  <li class="flex items-center gap-3 py-3">
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-[14px] font-semibold">{{ row.exam.title }}</p>
+                      <p class="text-[12px] text-muted">النجاح {{ row.exam.passMark }}%</p>
+                    </div>
+                    <span class="text-[13.5px] font-bold">
+                      {{ row.score === null ? '—' : row.score + ' / ' + row.exam.totalMarks }}
+                    </span>
+                    <span
+                      class="shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
+                      [class]="
+                        row.state === 'passed' ? 'bg-mint-light text-mint' : 'bg-art text-plum'
+                      "
+                    >
+                      {{ stateText(row.state) }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        </div>
+      </div>
+    }
+  </main>
+
+  <app-footer />
+  </div>
