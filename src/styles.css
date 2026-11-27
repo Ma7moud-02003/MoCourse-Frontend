@@ -29,3 +29,21 @@
 body {
   @apply bg-bg font-sans text-ink;
 }
+
+/* The shell (see app-header): on desktop a side menu sits fixed on the right,
+   so the page content and the footer start after it (the menu is 220px wide).
+   On a phone the tabs sit at the bottom, so the page gets room at the bottom. */
+body.has-shell {
+  padding-bottom: 68px;
+}
+@media (min-width: 1024px) {
+  body.has-shell {
+    padding-bottom: 0;
+  }
+  body.has-shell main,
+  body.has-shell app-footer footer > div {
+    margin-inline-start: 220px;
+    margin-inline-end: auto;
+    width: calc(100% - 220px);
+  }
+}
