@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { errorMessage } from '../../core/error-message';
 import { isFinishedResult, Quiz, QuizQuestion, QuizResult, QuizService } from '../../core/quiz.service';
@@ -13,7 +13,7 @@ import { AppHeader } from '../../layout/app-header/app-header';
   imports: [RouterLink, AppHeader, AppFooter],
   templateUrl: './quiz-page.html',
 })
-export class QuizPage implements OnInit {
+export class QuizPage implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private quizzes = inject(QuizService);
 
@@ -35,6 +35,12 @@ export class QuizPage implements OnInit {
   saving = signal(false);
   submitting = signal(false);
   result = signal<QuizResult | null>(null);
+
+  // The countdown. The deadline comes from the server, and we compare it with the
+  // server's own clock, so a wrong clock on the student's phone changes nothing.
+  secondsLeft = signal<number | null>(null);
+  private deadline = 0; // the deadline, in our own clock's milliseconds
+  private timerId: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit() {
     this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -60,11 +66,48 @@ export class QuizPage implements OnInit {
           return;
         }
         this.attemptId.set(answer.attemptId);
+        this.startCountdown(answer.expiresAt, answer.serverNow);
         this.loadAnswers(answer.answers ?? []);
         this.loadQuestions(answer.attemptId);
       },
       error: (err: HttpErrorResponse) => this.showStartError(err),
     });
+  }
+
+  // How far the server's clock is from ours, applied to the deadline.
+  private startCountdown(expiresAt: string, serverNow: string) {
+    const clockGap = new Date(serverNow).getTime() - Date.now();
+    this.deadline = new Date(expiresAt).getTime() - clockGap;
+    this.tick();
+    this.timerId = setInterval(() => this.tick(), 1000);
+  }
+
+  private tick() {
+    const left = Math.max(0, Math.round((this.deadline - Date.now()) / 1000));
+    this.secondsLeft.set(left);
+    // time is up: hand the exam in with the answers he already saved
+    if (left === 0) {
+      this.stopCountdown();
+      this.submit();
+    }
+  }
+
+  private stopCountdown() {
+    if (this.timerId !== null) clearInterval(this.timerId);
+    this.timerId = null;
+  }
+
+  ngOnDestroy() {
+    this.stopCountdown();
+  }
+
+  // 3725 seconds becomes "1:02:05", 125 becomes "2:05"
+  clock(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const rest = String(seconds % 60).padStart(2, '0');
+    if (hours > 0) return `${hours}:${String(minutes).padStart(2, '0')}:${rest}`;
+    return `${minutes}:${rest}`;
   }
 
   // The title, marks and time limit of this exam, from the course's exam list.
@@ -159,6 +202,7 @@ export class QuizPage implements OnInit {
     const attemptId = this.attemptId();
     if (!attemptId) return;
 
+    this.stopCountdown();
     this.submitting.set(true);
     this.quizzes.submit(attemptId).subscribe({
       next: (result) => {
@@ -167,6 +211,12 @@ export class QuizPage implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
+        // already graded (for example the time ended first): show that score
+        const body = err.error as { result?: QuizResult } | null;
+        if (err.status === 409 && body?.result) {
+          this.result.set(body.result);
+          return;
+        }
         this.errorText.set(errorMessage(err));
       },
     });

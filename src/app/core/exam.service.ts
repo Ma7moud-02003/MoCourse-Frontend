@@ -12,6 +12,7 @@ export interface TeacherExam {
   totalMarks: number;
   opensAt: string;
   closesAt: string;
+  timeLimit: number; // minutes each student gets once he starts
   isPublished: boolean;
   course: { id: number; title: string };
 }
@@ -23,6 +24,7 @@ export interface NewExam {
   opensAt: string; // full date-time with a zone, like 2026-12-01T09:00:00.000Z
   closesAt: string;
   courseId: number;
+  timeLimit?: number; // minutes; left out = the whole open window
 }
 
 export type QuestionKind = 'mcq' | 'true_false';
@@ -66,6 +68,11 @@ export class ExamService {
   // POST /api/quiz — a new exam always starts as a draft (the backend decides)
   create(exam: NewExam) {
     return this.http.post<TeacherExam>(`${API_URL}/quiz`, { ...exam, quizTarget: 'course' });
+  }
+
+  // PATCH /api/quiz/:id — the minutes each student gets (only until a student starts the exam)
+  setTimeLimit(examId: number, minutes: number) {
+    return this.http.patch<TeacherExam>(`${API_URL}/quiz/${examId}`, { timeLimit: minutes });
   }
 
   // PATCH /api/quiz/:id — students see the exam only after this

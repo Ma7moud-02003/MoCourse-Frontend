@@ -31,6 +31,7 @@ export class CourseExams implements OnInit {
   title = signal('');
   description = signal('');
   passMark = signal('50');
+  timeLimit = signal(''); // minutes for each student; empty = the whole open window
   opensAt = signal(''); // what the date field gives us, like 2026-12-01T09:00
   closesAt = signal('');
   examError = signal('');
@@ -96,6 +97,11 @@ export class CourseExams implements OnInit {
       this.examError.set('درجة النجاح لازم تكون بين 0 و100.');
       return;
     }
+    const minutes = Number(this.timeLimit());
+    if (this.timeLimit() !== '' && (!Number.isInteger(minutes) || minutes < 1)) {
+      this.examError.set('مدة الامتحان لازم تكون عدد دقايق صحيح من 1 فوق، أو سيبها فاضية.');
+      return;
+    }
     if (!this.opensAt() || !this.closesAt()) {
       this.examError.set('حدد وقت فتح الامتحان ووقت قفله.');
       return;
@@ -121,6 +127,7 @@ export class CourseExams implements OnInit {
         opensAt: this.toIso(this.opensAt()),
         closesAt: this.toIso(this.closesAt()),
         courseId: this.courseId,
+        timeLimit: this.timeLimit() === '' ? undefined : minutes,
       })
       .subscribe({
         next: (exam) => {
@@ -129,6 +136,7 @@ export class CourseExams implements OnInit {
           this.description.set('');
           this.opensAt.set('');
           this.closesAt.set('');
+          this.timeLimit.set('');
           this.loadExams();
           // open it straight away, the next thing he does is add questions
           this.showQuestions({ ...exam, course: { id: this.courseId, title: this.courseTitle() } });
@@ -234,6 +242,29 @@ export class CourseExams implements OnInit {
           this.questionError.set(this.saveError(err));
         },
       });
+  }
+
+  // Change the minutes of a draft exam. The backend refuses once a student started it.
+  newLimit = signal('');
+  limitError = signal('');
+
+  saveTimeLimit() {
+    const exam = this.openExam();
+    const minutes = Number(this.newLimit());
+    if (!exam) return;
+    if (!Number.isInteger(minutes) || minutes < 1) {
+      this.limitError.set('اكتب عدد دقايق صحيح من 1 فوق.');
+      return;
+    }
+    this.limitError.set('');
+    this.exams.setTimeLimit(exam.id, minutes).subscribe({
+      next: (saved) => {
+        this.openExam.set({ ...exam, timeLimit: saved.timeLimit });
+        this.newLimit.set('');
+        this.loadExams();
+      },
+      error: (err: HttpErrorResponse) => this.limitError.set(this.saveError(err)),
+    });
   }
 
   // ----- step 3: publish -----
