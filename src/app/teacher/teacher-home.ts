@@ -1,6 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { DashboardService, TeacherLastInfo, TeacherNumbers } from '../core/dashboard.service';
 import { errorMessage } from '../core/error-message';
 import {
   JoinRequest,
@@ -9,6 +11,7 @@ import {
   TeacherCourse,
   TeacherService,
 } from '../core/teacher.service';
+import { UserService } from '../core/user.service';
 import { AppFooter } from '../layout/app-footer/app-footer';
 import { AppHeader } from '../layout/app-header/app-header';
 
@@ -16,11 +19,21 @@ import { AppHeader } from '../layout/app-header/app-header';
 // and the payment numbers his students need.
 @Component({
   selector: 'app-teacher-home',
-  imports: [RouterLink, AppHeader, AppFooter],
+  imports: [RouterLink, AppHeader, AppFooter, DecimalPipe],
   templateUrl: './teacher-home.html',
 })
 export class TeacherHome implements OnInit {
   private teacher = inject(TeacherService);
+  private dashboard = inject(DashboardService);
+  private user = inject(UserService);
+
+  // the greeting, the numbers and the two small boxes
+  name = signal('');
+  numbers = signal<TeacherNumbers | null>(null);
+  last = signal<TeacherLastInfo | null>(null);
+
+  // the requests where he ticked "I checked the money arrived"; accepting needs the tick
+  confirmed = signal<Set<number>>(new Set());
 
   courses = signal<TeacherCourse[]>([]);
   coursesLoading = signal(true);
@@ -48,9 +61,20 @@ export class TeacherHome implements OnInit {
   });
 
   ngOnInit() {
+    this.user.me().subscribe({ next: (r) => this.name.set(r.personalInfo.fullName ?? '') });
+    this.dashboard.teacherNumbers().subscribe({ next: (n) => this.numbers.set(n) });
+    this.dashboard.teacherLastInfo().subscribe({ next: (l) => this.last.set(l) });
     this.loadCourses();
     this.loadRequests();
     this.loadPaymentInfo();
+  }
+
+  toggleConfirmed(id: number) {
+    this.confirmed.update((set) => {
+      const next = new Set(set);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
   }
 
   loadCourses() {

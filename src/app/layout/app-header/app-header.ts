@@ -29,8 +29,7 @@ const STUDENT_LINKS: NavItem[] = [
 ];
 
 const TEACHER_LINKS: NavItem[] = [
-  { label: 'الرئيسية', path: '/teacher/dashboard', icon: ICONS.home },
-  { label: 'كورساتي', path: '/teacher', icon: ICONS.courses, exact: true },
+  { label: 'الرئيسية', path: '/teacher', icon: ICONS.home, exact: true },
   { label: 'حسابي', path: '/profile', icon: ICONS.profile },
 ];
 
