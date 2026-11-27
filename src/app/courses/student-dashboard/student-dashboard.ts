@@ -6,12 +6,13 @@ import { errorMessage } from '../../core/error-message';
 import { CourseProgress, ProgressService } from '../../core/progress.service';
 import { UserService } from '../../core/user.service';
 import { AppFooter } from '../../layout/app-footer/app-footer';
+import { LaptopArt } from '../../shared/art/student-art';
 import { AppHeader } from '../../layout/app-header/app-header';
 
 // The student's home: where he stopped, his numbers, his newest courses and ideas for more.
 @Component({
   selector: 'app-student-dashboard',
-  imports: [AppHeader, AppFooter, RouterLink],
+  imports: [AppHeader, AppFooter, RouterLink, LaptopArt],
   templateUrl: './student-dashboard.html',
 })
 export class StudentDashboard implements OnInit {
