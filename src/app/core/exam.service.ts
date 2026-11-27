@@ -108,6 +108,20 @@ export class ExamService {
     return this.http.get<TeacherExam[]>(`${API_URL}/quiz/insQuizes`);
   }
 
+  // PATCH /api/question/:id — the text, the mark and the choices of one question.
+  // Each choice is sent with its id, so it is changed in place. The backend refuses (409)
+  // once a student started the exam.
+  updateQuestion(
+    questionId: number,
+    changes: {
+      question?: string;
+      mark?: number;
+      choices?: { id: number; text: string; isCorrect: boolean }[];
+    },
+  ) {
+    return this.http.patch(`${API_URL}/question/${questionId}`, changes);
+  }
+
   // DELETE /api/question/:id
   deleteQuestion(questionId: number) {
     return this.http.delete(`${API_URL}/question/${questionId}`);
