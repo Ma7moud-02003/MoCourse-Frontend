@@ -49,7 +49,7 @@ export class Register {
 
     // The backend logs us in directly after register (it sends a token), so go to the courses page.
     this.auth.register(this.form.getRawValue()).subscribe({
-      next: () => this.router.navigateByUrl('/courses'),
+      next: () => this.router.navigateByUrl(this.auth.home()),
       error: (err: HttpErrorResponse) => {
         this.serverError.set(errorMessage(err));
         this.loading.set(false);
