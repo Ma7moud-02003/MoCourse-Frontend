@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { CourseCard } from './course.service';
-import { coursesCountText, finalPrice, hasDiscount, isNew, priceText } from './course-display';
+import {
+  coursesCountText,
+  finalPrice,
+  hasDiscount,
+  isNew,
+  lessonTime,
+  priceText,
+} from './course-display';
 
 // A tiny course we can change per test. Only the fields the helpers read are filled.
 function course(overrides: Partial<CourseCard> = {}): CourseCard {
@@ -66,5 +73,17 @@ describe('coursesCountText', () => {
     expect(coursesCountText(2)).toBe('كورسان');
     expect(coursesCountText(5)).toBe('5 كورسات');
     expect(coursesCountText(12)).toBe('12 كورس');
+  });
+});
+
+describe('lessonTime', () => {
+  it('writes a lesson length as minutes:seconds', () => {
+    expect(lessonTime(750)).toBe('12:30');
+    expect(lessonTime(45)).toBe('0:45');
+  });
+
+  it('shows nothing when there is no length', () => {
+    expect(lessonTime(null)).toBe('');
+    expect(lessonTime(0)).toBe('');
   });
 });
