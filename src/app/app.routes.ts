@@ -59,6 +59,12 @@ export const routes: Routes = [
     loadComponent: () => import('./profile/profile').then((m) => m.ProfilePage),
   },
   {
+    // the student's own reviews: edit, delete, write a new one
+    path: 'my-reviews',
+    canActivate: [authGuard],
+    loadComponent: () => import('./my-reviews/my-reviews').then((m) => m.MyReviews),
+  },
+  {
     // the user's notifications (students and teachers)
     path: 'notifications',
     canActivate: [authGuard],
