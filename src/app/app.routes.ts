@@ -27,6 +27,13 @@ export const routes: Routes = [
     loadComponent: () => import('./courses/course-list/course-list').then((m) => m.CourseList),
   },
   {
+    // the student's own overview: numbers, last courses, where to continue
+    path: 'dashboard',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./courses/student-dashboard/student-dashboard').then((m) => m.StudentDashboard),
+  },
+  {
     // the courses a student joined and how far he got in each
     path: 'my-courses',
     canActivate: [authGuard],
