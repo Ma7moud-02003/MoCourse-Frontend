@@ -50,7 +50,14 @@ import { NotificationService } from '../../core/notification.service';
             >
           } @else {
             <a
+              routerLink="/teacher/dashboard"
+              routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
+              class="shrink-0 whitespace-nowrap rounded-full px-2.5 py-2 text-[13px] font-medium text-muted transition-colors hover:text-plum sm:px-3.5 sm:text-sm"
+              >لوحتي</a
+            >
+            <a
               routerLink="/teacher"
+              [routerLinkActiveOptions]="{ exact: true }"
               routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
               class="shrink-0 whitespace-nowrap rounded-full px-2.5 py-2 text-[13px] font-medium text-muted sm:px-3.5 sm:text-sm transition-colors hover:text-plum"
               >كورساتي</a
