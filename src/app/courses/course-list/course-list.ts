@@ -3,7 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime } from 'rxjs';
-import { CourseCard, CourseLevel, CourseService } from '../../core/course.service';
+import { Category, CourseCard, CourseLevel, CourseService } from '../../core/course.service';
 import {
   coursesCountText,
   finalPrice,
@@ -21,11 +21,14 @@ const PAGE_SIZE = 9;
 
 // The filter buttons at the top. The empty value means "no filter".
 const LEVELS: { value: CourseLevel | ''; label: string }[] = [
-  { value: '', label: 'كل المستويات' },
+  { value: '', label: 'الكل' },
   { value: 'beginner', label: 'مبتدئ' },
   { value: 'intermediate', label: 'متوسط' },
   { value: 'advanced', label: 'متقدم' },
 ];
+
+// The price slider goes from 0 to this number. At the top end it means "no upper limit".
+export const PRICE_TOP = 1000;
 
 @Component({
   selector: 'app-course-list',
@@ -46,6 +49,14 @@ export class CourseList implements OnInit {
   search = signal('');
   level = signal<CourseLevel | ''>('');
   page = signal(1);
+  categoryId = signal<number | null>(null);
+  minPrice = signal(0);
+  maxPrice = signal(PRICE_TOP);
+  readonly priceTop = PRICE_TOP;
+
+  // the category chips and the phone's filter panel
+  categories = signal<Category[]>([]);
+  filtersOpen = signal(false);
 
   // What came back from the server
   items = signal<CourseCard[]>([]);
@@ -62,7 +73,14 @@ export class CourseList implements OnInit {
   );
 
   // Any filter is on? Used to show the "امسح الفلاتر" button in the empty state.
-  hasFilters = computed(() => this.search() !== '' || this.level() !== '');
+  priceIsSet = computed(() => this.minPrice() > 0 || this.maxPrice() < PRICE_TOP);
+  hasFilters = computed(
+    () =>
+      this.search() !== '' ||
+      this.level() !== '' ||
+      this.categoryId() !== null ||
+      this.priceIsSet(),
+  );
 
   // Typing in the search box should not send a request for every letter.
   // We push the text here and wait 300ms of quiet before asking the server.
@@ -84,6 +102,11 @@ export class CourseList implements OnInit {
   }
 
   ngOnInit() {
+    // The chips are a bonus: without them the list still works.
+    this.courseService.categories().subscribe({
+      next: (list) => this.categories.set(list),
+      error: () => {},
+    });
     this.load();
   }
 
@@ -94,7 +117,16 @@ export class CourseList implements OnInit {
     this.error.set('');
 
     this.courseService
-      .list({ title: this.search(), level: this.level(), page: this.page(), limit: PAGE_SIZE })
+      .list({
+        title: this.search(),
+        level: this.level(),
+        categoryId: this.categoryId(),
+        minPrice: this.minPrice(),
+        // the top of the slider means "no limit", so we do not send it
+        maxPrice: this.maxPrice() < PRICE_TOP ? this.maxPrice() : null,
+        page: this.page(),
+        limit: PAGE_SIZE,
+      })
       .subscribe({
         next: (res) => {
           if (requestId !== this.lastRequest) return; // a newer request is on its way
@@ -120,8 +152,35 @@ export class CourseList implements OnInit {
     this.typing.next(value);
   }
 
+  // The search button: do not wait for the typing pause.
+  searchNow(text: string) {
+    this.search.set(text);
+    this.page.set(1);
+    this.load();
+  }
+
   setLevel(level: CourseLevel | '') {
     this.level.set(level);
+    this.page.set(1);
+    this.load();
+  }
+
+  setCategory(id: number | null) {
+    this.categoryId.set(id);
+    this.page.set(1);
+    this.load();
+  }
+
+  // The two slider handles. The min can never pass the max.
+  setMin(value: number) {
+    this.minPrice.set(Math.min(value, this.maxPrice()));
+  }
+  setMax(value: number) {
+    this.maxPrice.set(Math.max(value, this.minPrice()));
+  }
+
+  // Called when he lets go of a handle: now we ask the server.
+  applyPrice() {
     this.page.set(1);
     this.load();
   }
@@ -137,6 +196,9 @@ export class CourseList implements OnInit {
   clearFilters() {
     this.search.set('');
     this.level.set('');
+    this.categoryId.set(null);
+    this.minPrice.set(0);
+    this.maxPrice.set(PRICE_TOP);
     this.page.set(1);
     this.load();
   }
