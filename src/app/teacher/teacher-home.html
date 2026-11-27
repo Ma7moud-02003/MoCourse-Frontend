@@ -54,6 +54,12 @@
                   المحتوى
                 </a>
                 <a
+                  [routerLink]="['/teacher/courses', course.id, 'exams']"
+                  class="shrink-0 rounded-full border border-line px-3 py-1.5 text-[12.5px] font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum"
+                >
+                  الامتحانات
+                </a>
+                <a
                   [routerLink]="['/courses', course.id]"
                   class="shrink-0 rounded-full border border-line px-3 py-1.5 text-[12.5px] font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum"
                 >
