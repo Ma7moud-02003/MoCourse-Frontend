@@ -3,6 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { AuthService } from '../core/auth.service';
 import { errorMessage } from '../core/error-message';
 import { Profile, UserService } from '../core/user.service';
+import { RouterLink } from '@angular/router';
 import { AppFooter } from '../layout/app-footer/app-footer';
 import { AppHeader } from '../layout/app-header/app-header';
 
@@ -21,7 +22,7 @@ function profileError(err: HttpErrorResponse): string {
 // "حسابي": the photo, the name, the password, and deleting the account.
 @Component({
   selector: 'app-profile',
-  imports: [AppHeader, AppFooter],
+  imports: [AppHeader, AppFooter, RouterLink],
   templateUrl: './profile.html',
 })
 export class ProfilePage implements OnInit {
@@ -57,6 +58,15 @@ export class ProfilePage implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  isStudent = this.auth.role() === 'student';
+
+  // The password boxes can show the letters (the "إظهار" button in the design).
+  showPassword = signal(false);
+
+  logout() {
+    this.auth.logout();
   }
 
   roleText(role: string): string {
