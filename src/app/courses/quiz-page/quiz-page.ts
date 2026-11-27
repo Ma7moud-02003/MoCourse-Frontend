@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { errorMessage } from '../../core/error-message';
-import { isFinishedResult, QuizQuestion, QuizResult, QuizService } from '../../core/quiz.service';
+import { isFinishedResult, Quiz, QuizQuestion, QuizResult, QuizService } from '../../core/quiz.service';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
 
@@ -23,6 +23,10 @@ export class QuizPage implements OnInit {
   loading = signal(true);
   errorText = signal('');
 
+  // The exam itself (title, marks, time limit). It comes from the course's exam list,
+  // so the page can show what he is answering. Missing only if that list cannot be read.
+  quiz = signal<Quiz | null>(null);
+
   attemptId = signal<number | null>(null);
   questions = signal<QuizQuestion[]>([]);
   // the choice the student picked for each question: questionId -> choiceId
@@ -42,6 +46,9 @@ export class QuizPage implements OnInit {
       return;
     }
 
+    // The exam details for the top of the page (the start call does not send them).
+    this.loadQuizInfo(this.courseId, quizId);
+
     // Starting also tells us whether he already has an attempt: open (continue it)
     // or finished (show the score straight away).
     this.quizzes.start(quizId).subscribe({
@@ -57,6 +64,15 @@ export class QuizPage implements OnInit {
         this.loadQuestions(answer.attemptId);
       },
       error: (err: HttpErrorResponse) => this.showStartError(err),
+    });
+  }
+
+  // The title, marks and time limit of this exam, from the course's exam list.
+  // If it cannot be read we still show the exam, just without that header.
+  private loadQuizInfo(courseId: number, quizId: number) {
+    this.quizzes.courseQuizzes(courseId).subscribe({
+      next: (list) => this.quiz.set(list.find((item) => item.id === quizId) ?? null),
+      error: () => this.quiz.set(null),
     });
   }
 
@@ -108,7 +124,17 @@ export class QuizPage implements OnInit {
     this.saving.set(true);
     this.quizzes.saveAnswer(attemptId, question.id, choiceId).subscribe({
       next: () => this.saving.set(false),
-      error: () => this.saving.set(false),
+      error: (err: HttpErrorResponse) => {
+        this.saving.set(false);
+        // The exam window closed while he was answering: the backend closes the attempt
+        // and grades what he saved, so we show that score instead of losing it.
+        const body = err.error as { result?: QuizResult } | null;
+        if (err.status === 409 && body?.result) {
+          this.result.set(body.result);
+          return;
+        }
+        this.errorText.set(errorMessage(err));
+      },
     });
   }
 
