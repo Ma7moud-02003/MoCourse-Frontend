@@ -14,10 +14,10 @@ import { AuthService } from '../../core/auth.service';
         <!-- The logo is also the link back to the courses page -->
         <a routerLink="/courses" class="flex items-center gap-2 text-[19px] font-bold">
           <img src="logo.svg" alt="" width="34" height="34" />
-          <strong>MoCourse</strong>
+          <strong class="hidden sm:inline">MoCourse</strong>
         </a>
 
-        <nav class="ms-3 hidden items-center gap-1 sm:flex" aria-label="التنقل الرئيسي">
+        <nav class="ms-1 flex items-center gap-1 sm:ms-3" aria-label="التنقل الرئيسي">
           <a
             routerLink="/courses"
             routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
@@ -25,11 +25,19 @@ import { AuthService } from '../../core/auth.service';
           >
             الكورسات
           </a>
+          <a
+            routerLink="/my-courses"
+            routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
+            class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
+          >
+            كورساتي
+          </a>
         </nav>
 
         <button
           type="button"
           (click)="auth.logout()"
+          aria-label="تسجيل خروج"
           class="ms-auto flex cursor-pointer items-center gap-2 rounded-full border border-line bg-white px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum"
         >
           <!-- a small door-with-arrow icon -->
@@ -48,7 +56,7 @@ import { AuthService } from '../../core/auth.service';
             <path d="M10 17l-5-5 5-5" />
             <path d="M5 12h9" />
           </svg>
-          تسجيل خروج
+          <span class="hidden sm:inline">تسجيل خروج</span>
         </button>
       </div>
     </header>
