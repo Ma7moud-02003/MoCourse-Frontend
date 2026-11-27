@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { errorMessage } from '../../core/error-message';
-import { QuizQuestion, QuizResult, QuizService } from '../../core/quiz.service';
+import { isFinishedResult, QuizQuestion, QuizResult, QuizService } from '../../core/quiz.service';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
 
@@ -46,20 +46,15 @@ export class QuizPage implements OnInit {
     // or finished (show the score straight away).
     this.quizzes.start(quizId).subscribe({
       next: (answer) => {
-        if (answer.kind === 'finished' && answer.result) {
-          this.result.set(answer.result);
+        // He already finished this exam: the backend sends the score itself.
+        if (isFinishedResult(answer)) {
+          this.result.set(answer);
           this.loading.set(false);
           return;
         }
-        const id = answer.attempt?.id;
-        if (!id) {
-          this.loading.set(false);
-          this.errorText.set('حصلت مشكلة في بدء الامتحان. جرّب تاني.');
-          return;
-        }
-        this.attemptId.set(id);
+        this.attemptId.set(answer.attemptId);
         this.loadAnswers(answer.answers ?? []);
-        this.loadQuestions(id);
+        this.loadQuestions(answer.attemptId);
       },
       error: (err: HttpErrorResponse) => this.showStartError(err),
     });
