@@ -1,9 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { NotificationService } from '../../core/notification.service';
 
-// The bar at the top of every page a logged-in student sees:
-// the logo, the links between pages, and the way out (log out).
+// The bar at the top of every page a logged-in user sees:
+// the logo, the links for his role, the notifications bell, and the way out (log out).
 // It is a small component so every new page can reuse it with one line: <app-header />
 @Component({
   selector: 'app-header',
@@ -11,41 +12,82 @@ import { AuthService } from '../../core/auth.service';
   template: `
     <header class="sticky top-0 z-20 border-b border-line bg-bg/85 backdrop-blur">
       <div class="mx-auto flex h-16 w-full max-w-[1120px] items-center gap-3 px-5">
-        <!-- The logo is also the link back to the courses page -->
-        <a routerLink="/courses" class="flex items-center gap-2 text-[19px] font-bold">
+        <!-- The logo leads home: the page that fits the role -->
+        <a routerLink="/" class="flex items-center gap-2 text-[19px] font-bold">
           <img src="logo.svg" alt="" width="34" height="34" />
           <strong class="hidden sm:inline">MoCourse</strong>
         </a>
 
+        <!-- A student and a teacher have different pages, so each sees his own links -->
         <nav class="ms-1 flex items-center gap-1 sm:ms-3" aria-label="التنقل الرئيسي">
-          <a
-            routerLink="/courses"
-            routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
-            class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
-          >
-            الكورسات
-          </a>
-          <a
-            routerLink="/my-courses"
-            routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
-            class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
-          >
-            كورساتي
-          </a>
-          <a
-            routerLink="/certificates"
-            routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
-            class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
-          >
-            شهاداتي
-          </a>
+          @if (auth.role() === 'student') {
+            <a
+              routerLink="/courses"
+              routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
+              class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
+              >الكورسات</a
+            >
+            <a
+              routerLink="/my-courses"
+              routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
+              class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
+              >كورساتي</a
+            >
+            <a
+              routerLink="/certificates"
+              routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
+              class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
+              >شهاداتي</a
+            >
+          } @else {
+            <a
+              routerLink="/teacher"
+              routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
+              class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
+              >كورساتي</a
+            >
+          }
         </nav>
+
+        <!-- The bell: a number shows how many notifications are unread -->
+        <a
+          routerLink="/notifications"
+          routerLinkActive="text-plum"
+          class="relative ms-auto flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:border-plum/40 hover:text-plum"
+          [attr.aria-label]="
+            notifications.unread() > 0
+              ? 'الإشعارات، ' + notifications.unread() + ' جديد'
+              : 'الإشعارات'
+          "
+        >
+          <svg
+            aria-hidden="true"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7" />
+            <path d="M10 20a2 2 0 0 0 4 0" />
+          </svg>
+          @if (notifications.unread() > 0) {
+            <span
+              class="absolute -top-1 -end-1 flex min-w-[18px] items-center justify-center rounded-full bg-coral px-1 text-[11px] font-bold leading-[18px] text-white"
+            >
+              {{ notifications.unread() > 9 ? '9+' : notifications.unread() }}
+            </span>
+          }
+        </a>
 
         <button
           type="button"
           (click)="auth.logout()"
           aria-label="تسجيل خروج"
-          class="ms-auto flex cursor-pointer items-center gap-2 rounded-full border border-line bg-white px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum"
+          class="flex cursor-pointer items-center gap-2 rounded-full border border-line bg-white px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum"
         >
           <!-- a small door-with-arrow icon -->
           <svg
@@ -69,6 +111,12 @@ import { AuthService } from '../../core/auth.service';
     </header>
   `,
 })
-export class AppHeader {
+export class AppHeader implements OnInit {
   auth = inject(AuthService);
+  notifications = inject(NotificationService);
+
+  // Ask once how many notifications are unread each time a page with this header opens.
+  ngOnInit() {
+    this.notifications.refreshUnread();
+  }
 }
