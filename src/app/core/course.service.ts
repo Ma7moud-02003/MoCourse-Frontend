@@ -122,7 +122,7 @@ export class CourseService {
   // PATCH /api/course/update/:id — changes a course. The picture is optional:
   // when he did not pick a new one, the old one stays.
   // The backend cannot clear a discount, so an empty discount keeps the old one.
-  update(id: number, course: NewCourse, thumbnail: File | null) {
+  update(id: number, course: NewCourse, thumbnail: File | null, isPublished?: boolean) {
     const form = new FormData();
     form.append('title', course.title);
     form.append('describtion', course.describtion);
@@ -134,6 +134,8 @@ export class CourseService {
     for (const cover of course.covers) form.append('covers[]', cover);
     for (const requirement of course.requirements) form.append('requirements[]', requirement);
     if (thumbnail) form.append('thumbnail', thumbnail);
+    // the update (unlike the create) understands "false", so this is how a course becomes a draft
+    if (isPublished !== undefined) form.append('isPublished', String(isPublished));
 
     return this.http.patch<CourseDetails>(`${API_URL}/course/update/${id}`, form);
   }
