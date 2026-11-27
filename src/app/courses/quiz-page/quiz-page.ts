@@ -9,6 +9,7 @@ import {
   QuizResult,
   QuizService,
 } from '../../core/quiz.service';
+import { ExamArt } from '../../shared/art/student-art';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
 
@@ -16,7 +17,7 @@ import { AppHeader } from '../../layout/app-header/app-header';
 // then the score at the end.
 @Component({
   selector: 'app-quiz-page',
-  imports: [RouterLink, AppHeader, AppFooter],
+  imports: [RouterLink, AppHeader, AppFooter, ExamArt],
   templateUrl: './quiz-page.html',
 })
 export class QuizPage implements OnInit, OnDestroy {
