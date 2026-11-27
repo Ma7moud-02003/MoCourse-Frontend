@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Category, CourseLevel, CourseService } from '../../core/course.service';
 import { errorMessage } from '../../core/error-message';
@@ -7,7 +7,8 @@ import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
 
 // A teacher opening a new course, or changing one he already has (the address has an id).
-// The details, the price, what the student will learn, what he needs, and one picture for the course card.
+// Six small steps on one page, with a live preview of the course card and a progress checklist.
+// The details, the picture, the price, what the student will learn, what he needs, and publish or draft.
 @Component({
   selector: 'app-course-form',
   imports: [RouterLink, AppHeader, AppFooter],
@@ -36,10 +37,46 @@ export class CourseForm implements OnInit {
   duration = signal('');
   level = signal<CourseLevel>('beginner');
   categoryId = signal<number | null>(null);
-  covers = signal('');
-  requirements = signal('');
+  // the two lists: one text box per point, he can add and remove boxes
+  covers = signal<string[]>(['']);
+  requirements = signal<string[]>(['']);
   thumbnail = signal<File | null>(null);
   currentThumbnail = signal(''); // the picture the course has now, when editing
+  previewUrl = signal(''); // the picture he just chose, to show in the preview
+  dragging = signal(false);
+  published = signal(true); // the switch in step 6
+  saveKind = signal<'' | 'publish' | 'draft'>(''); // which button is working
+
+  // What the preview and the checklist read
+  categoryName = computed(
+    () => this.categories().find((c) => c.id === this.categoryId())?.name ?? '',
+  );
+  Number = Number; // so the template can turn text into a number
+  shownPrice = computed(() =>
+    Number(this.discountPrice()) > 0 ? Number(this.discountPrice()) : Number(this.price()),
+  );
+  hasPicture = computed(() => !!this.thumbnail() || !!this.currentThumbnail());
+
+  // The four checks of the progress card. Each one is a yes or no.
+  checks = computed(() => [
+    {
+      label: 'الاسم والتصنيف والمستوى',
+      done: this.title().trim().length >= 5 && this.categoryId() !== null,
+    },
+    {
+      label: 'الوصف والسعر والمدة',
+      done:
+        this.describtion().trim().length >= 20 &&
+        Number(this.price()) >= 100 &&
+        Number(this.duration()) >= 5,
+    },
+    {
+      label: 'نقاط التعلم والمتطلبات',
+      done: this.lines(this.covers()).length > 0 && this.lines(this.requirements()).length > 0,
+    },
+    { label: 'صورة الكورس', done: this.hasPicture() },
+  ]);
+  percent = computed(() => Math.round((this.checks().filter((c) => c.done).length / 4) * 100));
 
   readonly levels: { value: CourseLevel; label: string }[] = [
     { value: 'beginner', label: 'مبتدئ' },
@@ -74,44 +111,65 @@ export class CourseForm implements OnInit {
         this.duration.set(String(course.duration));
         this.level.set(course.level);
         if (course.category?.id) this.categoryId.set(course.category.id);
-        this.covers.set(course.covers.join('\n'));
-        this.requirements.set(course.requirements.join('\n'));
+        this.covers.set(course.covers.length ? course.covers : ['']);
+        this.requirements.set(course.requirements.length ? course.requirements : ['']);
         this.currentThumbnail.set(course.thumbnail);
+        this.published.set(course.isPublished);
       },
       error: () => this.errorText.set('مقدرناش نحمّل بيانات الكورس. تأكد إنه بتاعك وجرّب تاني.'),
     });
   }
 
-  // We check the picture here, so he learns about a wrong file before the upload.
+  // The picture comes from the file box or from a drop on the dashed area.
   onThumbnail(event: Event) {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
+    this.takePicture(input.files?.[0] ?? null);
+    input.value = '';
+  }
+
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    this.dragging.set(false);
+    this.takePicture(event.dataTransfer?.files[0] ?? null);
+  }
+
+  // We check the picture here, so he learns about a wrong file before the upload.
+  private takePicture(file: File | null) {
     this.errorText.set('');
-    this.thumbnail.set(null);
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      input.value = '';
       this.errorText.set('صورة الكورس لازم تكون صورة، زي JPG أو PNG.');
       return;
     }
     if (file.size > this.maxThumbnailBytes) {
-      input.value = '';
       this.errorText.set('الصورة كبيرة أوي، خليها أقل من 5 ميجا.');
       return;
     }
     this.thumbnail.set(file);
+    this.previewUrl.set(URL.createObjectURL(file));
   }
 
-  // Each line he writes becomes one point ("هتتعلم إيه" and "محتاج تعرف قبل ما تبدأ").
-  private lines(text: string): string[] {
-    return text
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+  // The lists of step 4 and 5
+  setPoint(list: 'covers' | 'requirements', index: number, text: string) {
+    this[list].update((all) => all.map((old, i) => (i === index ? text : old)));
   }
 
-  save() {
+  addPoint(list: 'covers' | 'requirements') {
+    this[list].update((all) => [...all, '']);
+  }
+
+  removePoint(list: 'covers' | 'requirements', index: number) {
+    this[list].update((all) => (all.length > 1 ? all.filter((_, i) => i !== index) : ['']));
+  }
+
+  // The points he wrote, without the empty boxes.
+  private lines(points: string[]): string[] {
+    return points.map((point) => point.trim()).filter((point) => point.length > 0);
+  }
+
+  // "publish" shows the course to students; "draft" keeps it hidden until he is ready.
+  save(kind: 'publish' | 'draft') {
     const problem = this.firstProblem();
     if (problem) {
       this.errorText.set(problem);
@@ -120,6 +178,7 @@ export class CourseForm implements OnInit {
 
     this.errorText.set('');
     this.saving.set(true);
+    this.saveKind.set(kind);
 
     const discount = Number(this.discountPrice());
     const fields = {
@@ -133,23 +192,40 @@ export class CourseForm implements OnInit {
       covers: this.lines(this.covers()),
       requirements: this.lines(this.requirements()),
     };
+    // a new course follows the button he pressed; an old one follows the switch
+    const visible = this.courseId === null ? kind === 'publish' : this.published();
 
-    const request =
-      this.courseId === null
-        ? this.courses.create(fields, this.thumbnail() as File)
-        : this.courses.update(this.courseId, fields, this.thumbnail());
+    if (this.courseId !== null) {
+      const id = this.courseId;
+      this.courses.update(id, fields, this.thumbnail(), visible).subscribe({
+        next: () => this.finish(id),
+        error: (err: HttpErrorResponse) => this.fail(err),
+      });
+      return;
+    }
 
-    request.subscribe({
+    this.courses.create(fields, this.thumbnail() as File).subscribe({
       next: (course) => {
-        this.saving.set(false);
-        // straight to the course page, so he sees what the student will see
-        this.router.navigate(['/courses', this.courseId ?? course.id]);
+        // the backend always creates a published course, so a draft is hidden right after
+        if (visible) return this.finish(course.id);
+        this.courses.update(course.id, fields, null, false).subscribe({
+          next: () => this.finish(course.id),
+          error: (err: HttpErrorResponse) => this.fail(err),
+        });
       },
-      error: (err: HttpErrorResponse) => {
-        this.saving.set(false);
-        this.errorText.set(this.saveError(err));
-      },
+      error: (err: HttpErrorResponse) => this.fail(err),
     });
+  }
+
+  // Saved: go to the course content, where he adds the sections and lessons.
+  private finish(id: number) {
+    this.saving.set(false);
+    this.router.navigate(['/teacher/courses', id, 'content']);
+  }
+
+  private fail(err: HttpErrorResponse) {
+    this.saving.set(false);
+    this.errorText.set(this.saveError(err));
   }
 
   // One clear sentence about the first thing that is missing or out of range.
@@ -158,7 +234,8 @@ export class CourseForm implements OnInit {
     if (title.length < 5 || title.length > 150) return 'اسم الكورس لازم يكون بين 5 و150 حرف.';
 
     const describtion = this.describtion().trim();
-    if (describtion.length < 20) return 'اكتب وصف للكورس 20 حرف على الأقل، عشان الطالب يعرف هو بياخد إيه.';
+    if (describtion.length < 20)
+      return 'اكتب وصف للكورس 20 حرف على الأقل، عشان الطالب يعرف هو بياخد إيه.';
 
     const price = Number(this.price());
     if (!price || price < 100 || price > 10000) return 'السعر لازم يكون بين 100 و10000 جنيه.';
@@ -173,7 +250,8 @@ export class CourseForm implements OnInit {
 
     if (this.categoryId() === null) return 'اختار القسم اللي الكورس بيتبعه.';
     if (this.lines(this.covers()).length === 0) return 'اكتب نقطة واحدة على الأقل في "هتتعلم إيه".';
-    if (this.lines(this.requirements()).length === 0) return 'اكتب نقطة واحدة على الأقل في "محتاج تعرف قبل ما تبدأ".';
+    if (this.lines(this.requirements()).length === 0)
+      return 'اكتب نقطة واحدة على الأقل في "محتاج تعرف قبل ما تبدأ".';
     // a new course needs a picture; an old one already has one
     if (!this.thumbnail() && this.courseId === null) return 'اختار صورة للكورس.';
 
