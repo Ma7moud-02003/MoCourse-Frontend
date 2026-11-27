@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { errorMessage } from '../core/error-message';
@@ -24,6 +24,24 @@ export class Notifications implements OnInit {
   page = signal(1);
   hasMore = signal(false);
   unread = this.service.unread;
+
+  // الكل or غير المقروء (the second one only filters what is already loaded)
+  tab = signal<'all' | 'unread'>('all');
+  shown = computed(() =>
+    this.tab() === 'all' ? this.items() : this.items().filter((n) => !n.isRead),
+  );
+
+  // A small round icon for each kind of notification: its letter-like sign and its colors.
+  icon(type: string): { sign: string; style: string } {
+    const kinds: Record<string, { sign: string; style: string }> = {
+      purchase: { sign: '✓', style: 'bg-mint-light text-mint' },
+      enrollment: { sign: '✓', style: 'bg-mint-light text-mint' },
+      certificate: { sign: '★', style: 'bg-[#fdebe4] text-[#a3402a]' },
+      course: { sign: '◎', style: 'bg-art text-plum' },
+      quiz: { sign: '✎', style: 'bg-[#fdebe4] text-[#a3402a]' },
+    };
+    return kinds[type] ?? { sign: '!', style: 'bg-art text-plum' };
+  }
 
   ngOnInit() {
     this.service.refreshUnread();

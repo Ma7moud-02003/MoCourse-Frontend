@@ -1,71 +1,112 @@
 <div class="flex min-h-dvh flex-col">
   <app-header />
 
-  <main class="mx-auto w-full max-w-[760px] flex-1 px-5 pb-16">
-    <div class="mt-8 flex flex-wrap items-center justify-between gap-3">
-      <h1 class="text-[28px] font-bold leading-10">الإشعارات</h1>
+  <main class="mx-auto w-full max-w-[860px] flex-1 px-5 pb-16">
+    <p class="mt-6 text-[12px] text-muted">الرئيسية ‹ الإشعارات</p>
+    <div class="mt-2 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="text-[26px] font-bold leading-10">الإشعارات</h1>
+        <p class="text-[14px] text-muted">كل جديد في كورساتك ودفعك.</p>
+      </div>
       @if (unread() > 0) {
         <button
           type="button"
           (click)="readAll()"
-          class="rounded-full border border-line bg-white px-4 py-2 text-[13px] font-medium text-ink hover:border-plum/40"
+          class="cursor-pointer rounded-full border border-line bg-white px-4 py-2 text-[13px] font-medium text-ink hover:border-plum/40"
         >
           علّم الكل كمقروء
         </button>
       }
     </div>
 
+    <div role="tablist" class="mt-5 inline-flex rounded-full border border-line bg-white p-1">
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="tab() === 'all'"
+        (click)="tab.set('all')"
+        class="cursor-pointer rounded-full px-5 py-2 text-[13px] font-semibold"
+        [class]="tab() === 'all' ? 'bg-plum text-white' : 'text-muted'"
+      >
+        الكل
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="tab() === 'unread'"
+        (click)="tab.set('unread')"
+        class="cursor-pointer rounded-full px-5 py-2 text-[13px] font-semibold"
+        [class]="tab() === 'unread' ? 'bg-plum text-white' : 'text-muted'"
+      >
+        غير المقروء
+      </button>
+    </div>
+
     @if (loading()) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted">
+      <p
+        class="mt-5 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted"
+      >
         بنجيب الإشعارات...
       </p>
     }
 
     @if (!loading() && error()) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink">
+      <p
+        class="mt-5 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink"
+      >
         {{ error() }}
       </p>
     }
 
-    @if (!loading() && !error() && items().length === 0) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink">
-        مفيش إشعارات لسه.
+    @if (!loading() && !error() && shown().length === 0) {
+      <p
+        class="mt-5 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink"
+      >
+        {{ tab() === 'unread' ? 'مفيش إشعارات جديدة.' : 'مفيش إشعارات لسه.' }}
       </p>
     }
 
-    <ul class="mt-5 space-y-2.5">
-      @for (item of items(); track item.id) {
-        <li>
-          <button
-            type="button"
-            (click)="open(item)"
-            class="flex w-full cursor-pointer items-start gap-3 rounded-[18px] border bg-white p-4 text-start transition-colors hover:border-plum/40"
-            [class.border-plum]="!item.isRead"
-            [class.border-line]="item.isRead"
-          >
-            <!-- a small dot marks an unread notification -->
-            <span
-              class="mt-2 size-2.5 shrink-0 rounded-full"
-              [class.bg-plum]="!item.isRead"
-              [class.bg-transparent]="item.isRead"
-              [attr.aria-label]="item.isRead ? null : 'جديد'"
-            ></span>
-            <span class="min-w-0 flex-1">
-              <span class="block text-[15px] font-semibold">{{ item.title }}</span>
-              <span class="mt-1 block text-[14px] leading-7 text-muted">{{ item.message }}</span>
-              <span class="mt-1.5 block text-[12px] text-muted">{{ dateText(item.createdAt) }}</span>
-            </span>
-          </button>
-        </li>
-      }
-    </ul>
+    @if (shown().length > 0) {
+      <ul class="mt-5 overflow-hidden rounded-[22px] border border-line bg-white">
+        @for (item of shown(); track item.id) {
+          <li class="border-b border-line last:border-b-0">
+            <button
+              type="button"
+              (click)="open(item)"
+              class="flex w-full cursor-pointer items-start gap-3 p-4 text-start transition-colors hover:bg-bg"
+              [class.bg-[#faf6fc]]="!item.isRead"
+            >
+              <span
+                aria-hidden="true"
+                class="grid size-10 shrink-0 place-items-center rounded-xl text-[16px] font-bold"
+                [class]="icon(item.type).style"
+              >
+                {{ icon(item.type).sign }}
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-[15px] font-bold">{{ item.title }}</span>
+                <span class="mt-0.5 block text-[13px] leading-7 text-muted">{{
+                  item.message
+                }}</span>
+                <span class="mt-1 block text-[11px] text-muted">{{
+                  dateText(item.createdAt)
+                }}</span>
+              </span>
+              @if (!item.isRead) {
+                <span class="mt-3 size-2.5 shrink-0 rounded-full bg-plum" aria-label="جديد"></span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    }
 
     @if (hasMore()) {
       <button
         type="button"
         (click)="more()"
         [disabled]="loadingMore()"
-        class="mt-5 rounded-full border border-line bg-white px-5 py-2.5 text-[14px] font-medium text-ink disabled:opacity-60"
+        class="mt-5 cursor-pointer rounded-full border border-line bg-white px-5 py-2.5 text-[14px] font-medium text-ink disabled:opacity-60"
       >
         {{ loadingMore() ? 'بنجيب...' : 'شوف أكتر' }}
       </button>
