@@ -20,6 +20,13 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./courses/course-list/course-list').then((m) => m.CourseList),
   },
+  {
+    // one course: its details and its lessons
+    path: 'courses/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./courses/course-details/course-details').then((m) => m.CourseDetailsPage),
+  },
   // the old home page is gone; its address now opens the courses page
   { path: 'home', pathMatch: 'full', redirectTo: 'courses' },
   { path: '**', redirectTo: 'courses' },
