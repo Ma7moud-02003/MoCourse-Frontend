@@ -1,43 +1,223 @@
-<!-- Same top bar as the other pages -->
 <div class="flex min-h-dvh flex-col">
   <app-header />
 
   <main class="mx-auto w-full max-w-[1120px] flex-1 px-5 pb-16">
-    <!-- ===== A short welcome, in the same plum style as the courses page ===== -->
-    <section class="relative mt-6 overflow-hidden rounded-[26px] bg-plum px-6 py-9 text-white md:px-10 md:py-11">
-      <div
-        aria-hidden="true"
-        class="pointer-events-none absolute -top-28 -left-20 h-64 w-64 rounded-full bg-mint/25 blur-3xl"
-      ></div>
-      <p class="text-sm font-medium text-mint">لوحة المدرس</p>
-      <h1 class="mt-2 text-[28px] font-bold md:text-[34px]">أهلاً بيك يا مدرّس</h1>
-      <p class="mt-3 max-w-xl text-white/85">
-        دي مساحتك في MoCourse. من هنا بتجهّز كورساتك وتتابع الطلاب اللي بيدخلوا عليها.
+    <section class="mt-5 rounded-[22px] border border-line bg-white p-5 md:p-6">
+      <h1 class="text-[22px] font-bold leading-9">لوحة المدرّس</h1>
+      <p class="mt-1 text-[13.5px] leading-7 text-muted">
+        من هنا تتابع كورساتك، وتوافق على الطلبة اللي طالبين يشتركوا، وتكتب بيانات الدفع اللي هيحوّلوا عليها.
       </p>
     </section>
 
-    <!-- ===== The three things a teacher does here ===== -->
-    <section class="mt-6 grid gap-4 md:grid-cols-3">
-      <article class="rounded-[22px] border border-line bg-white p-6">
+    <div class="mt-5 grid gap-5 lg:grid-cols-2">
+      <!-- ===== His courses ===== -->
+      <section class="rounded-[22px] border border-line bg-white p-5">
         <h2 class="text-[17px] font-bold">كورساتي</h2>
-        <p class="mt-2 text-sm leading-7 text-muted">
-          الكورسات اللي بتشرحها، بسعرها ومستواها، من مكان واحد.
-        </p>
-      </article>
 
-      <article class="rounded-[22px] border border-line bg-white p-6">
-        <h2 class="text-[17px] font-bold">الأقسام والدروس</h2>
-        <p class="mt-2 text-sm leading-7 text-muted">
-          كل كورس بتقسّمه أقسام، وكل قسم فيه دروسه بالترتيب.
-        </p>
-      </article>
+        @if (coursesLoading()) {
+          <p class="mt-3 text-[13.5px] text-muted">بنجيب كورساتك...</p>
+        } @else if (courses().length === 0) {
+          <p class="mt-3 rounded-xl bg-bg px-4 py-3 text-[13.5px] leading-7 text-muted">
+            لسه مفيش كورسات على حسابك. أول ما تنشر كورس هيظهر هنا.
+          </p>
+        } @else {
+          <ul class="mt-3 space-y-2.5">
+            @for (course of courses(); track course.id) {
+              <li class="flex items-center gap-3 rounded-xl border border-line p-3">
+                @if (course.thumbnail) {
+                  <img
+                    [src]="course.thumbnail"
+                    [alt]="course.title"
+                    width="72"
+                    height="48"
+                    class="h-12 w-[72px] shrink-0 rounded-lg bg-art object-cover"
+                  />
+                }
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-[14px] font-semibold">{{ course.title }}</p>
+                  <p class="mt-0.5 text-[12.5px] text-muted">
+                    {{ course.isPublished ? 'منشور' : 'مسودة مش منشورة' }}
+                  </p>
+                </div>
+                <a
+                  [routerLink]="['/courses', course.id]"
+                  class="shrink-0 rounded-full border border-line px-3 py-1.5 text-[12.5px] font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum"
+                >
+                  شوف الصفحة
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </section>
 
-      <article class="rounded-[22px] border border-line bg-white p-6">
-        <h2 class="text-[17px] font-bold">الطلاب</h2>
-        <p class="mt-2 text-sm leading-7 text-muted">
-          تشوف مين اشترك في كورساتك وتتابع تقدّمه.
+      <!-- ===== Students asking to join ===== -->
+      <section class="rounded-[22px] border border-line bg-white p-5">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-[17px] font-bold">طلبات الاشتراك</h2>
+          @if (requests().length > 0) {
+            <span class="rounded-full bg-art px-3 py-1 text-[12.5px] font-semibold text-plum">
+              {{ requests().length }} مستنية
+            </span>
+          }
+        </div>
+
+        @if (requestsLoading()) {
+          <p class="mt-3 text-[13.5px] text-muted">بنجيب الطلبات...</p>
+        } @else if (requestsNote()) {
+          <p class="mt-3 rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink">
+            {{ requestsNote() }}
+          </p>
+        } @else if (requests().length === 0) {
+          <p class="mt-3 rounded-xl bg-bg px-4 py-3 text-[13.5px] leading-7 text-muted">
+            مفيش طلبات مستنية موافقتك دلوقتي.
+          </p>
+        } @else {
+          <ul class="mt-3 space-y-3">
+            @for (request of requests(); track request.id) {
+              <li class="rounded-xl border border-line p-3">
+                <p class="text-[14px] font-semibold">{{ request.user.fullName }}</p>
+                <p class="mt-0.5 text-[12.5px] text-muted">{{ request.user.email }}</p>
+                <p class="mt-1 text-[13px] text-ink">
+                  عايز يشترك في: <span class="font-semibold">{{ request.course.title }}</span>
+                </p>
+                <p class="mt-1 text-[12.5px] text-muted">
+                  المبلغ {{ request.amount }} ج.م — {{ methodText(request.paymentMethod) }}
+                  @if (request.transactionId) {
+                    — رقم العملية {{ request.transactionId }}
+                  }
+                </p>
+
+                @if (request.thumbnail) {
+                  <a
+                    [href]="request.thumbnail"
+                    target="_blank"
+                    rel="noopener"
+                    class="mt-2 inline-block text-[12.5px] font-medium text-plum underline"
+                  >
+                    شوف صورة التحويل
+                  </a>
+                }
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    (click)="decide(request, 'PAID')"
+                    [disabled]="deciding() === request.id"
+                    class="cursor-pointer rounded-full bg-plum px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+                  >
+                    {{ deciding() === request.id ? 'بنحفظ...' : 'أكّد الاشتراك' }}
+                  </button>
+                  <button
+                    type="button"
+                    (click)="decide(request, 'FAILED')"
+                    [disabled]="deciding() === request.id"
+                    class="cursor-pointer rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink transition-colors hover:border-coral/50 hover:text-coral disabled:opacity-60"
+                  >
+                    ارفض
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (decideNote()) {
+          <p class="mt-3 rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink">
+            {{ decideNote() }}
+          </p>
+        }
+      </section>
+    </div>
+
+    <!-- ===== Where his students send the money ===== -->
+    <section class="mt-5 rounded-[22px] border border-line bg-white p-5 md:p-6">
+      <h2 class="text-[17px] font-bold">بيانات الدفع</h2>
+      <p class="mt-1 text-[13.5px] leading-7 text-muted">
+        الأرقام دي بتظهر للطالب في صفحة الكورس عشان يحوّل عليها. اكتب اللي بتستخدمه بس، وسيب الباقي فاضي.
+      </p>
+
+      <div class="mt-4 grid gap-3 md:grid-cols-2">
+        <label class="block">
+          <span class="text-[13px] font-medium">اسم صاحب الحساب</span>
+          <input
+            type="text"
+            [value]="form().ownerName"
+            (input)="setField('ownerName', $any($event.target).value)"
+            placeholder="مثال: كريم عادل"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">إنستاباي</span>
+          <input
+            type="text"
+            dir="ltr"
+            [value]="form().instapay"
+            (input)="setField('instapay', $any($event.target).value)"
+            placeholder="example@instapay"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">فودافون كاش</span>
+          <input
+            type="tel"
+            dir="ltr"
+            [value]="form().vodafoneCash"
+            (input)="setField('vodafoneCash', $any($event.target).value)"
+            placeholder="01xxxxxxxxx"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">أورنج كاش</span>
+          <input
+            type="tel"
+            dir="ltr"
+            [value]="form().orangeCash"
+            (input)="setField('orangeCash', $any($event.target).value)"
+            placeholder="01xxxxxxxxx"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
+
+        <label class="block md:col-span-2">
+          <span class="text-[13px] font-medium">حساب بنكي</span>
+          <input
+            type="text"
+            dir="ltr"
+            [value]="form().bankAccount"
+            (input)="setField('bankAccount', $any($event.target).value)"
+            placeholder="رقم الحساب أو IBAN"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
+      </div>
+
+      @if (paymentNote()) {
+        <p class="mt-3 rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink">
+          {{ paymentNote() }}
         </p>
-      </article>
+      }
+
+      @if (paymentSaved()) {
+        <p class="mt-3 rounded-xl bg-mint-light px-4 py-3 text-[13px] leading-7 text-mint">
+          تم الحفظ. الأرقام دي هتظهر للطالب في صفحة الكورس.
+        </p>
+      }
+
+      <button
+        type="button"
+        (click)="savePaymentInfo()"
+        [disabled]="paymentSaving()"
+        class="mt-4 cursor-pointer rounded-full bg-plum px-6 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+      >
+        {{ paymentSaving() ? 'بنحفظ...' : 'احفظ بيانات الدفع' }}
+      </button>
     </section>
   </main>
 
