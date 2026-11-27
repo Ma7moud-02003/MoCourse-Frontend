@@ -1,158 +1,272 @@
 <div class="flex min-h-dvh flex-col">
   <app-header />
 
-  <main class="mx-auto w-full max-w-[640px] flex-1 px-5 pb-16">
-    <h1 class="mt-8 text-[28px] font-bold leading-10">حسابي</h1>
+  <main class="mx-auto w-full max-w-[1000px] flex-1 px-5 pb-16">
+    <p class="mt-6 text-[12px] text-muted">الرئيسية ‹ حسابي</p>
 
     @if (loading()) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted">
+      <p
+        class="mt-4 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted"
+      >
         بنجيب بياناتك...
       </p>
     }
 
     @if (!loading() && loadError()) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink">
+      <p
+        class="mt-4 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink"
+      >
         {{ loadError() }}
       </p>
     }
 
     @if (profile(); as p) {
-      <!-- ===== Photo, name, email ===== -->
-      <section class="mt-5 rounded-[22px] border border-line bg-white p-5">
-        <div class="flex items-center gap-4">
+      <!-- ===== Banner with the photo, name and role ===== -->
+      <section class="mt-3 overflow-hidden rounded-[22px] border border-line bg-white">
+        <div class="relative h-[110px] overflow-hidden bg-plum sm:h-[130px]" aria-hidden="true">
+          <div class="absolute -top-16 -start-10 size-52 rounded-full bg-white/10"></div>
+          <div class="absolute -top-10 end-24 size-24 rounded-full bg-coral"></div>
+          <div class="absolute -bottom-12 start-1/3 size-28 rounded-full bg-mint"></div>
+        </div>
+        <div class="relative flex flex-wrap items-end gap-4 px-5 pb-5">
           @if (p.avatar) {
-            <img [src]="p.avatar" alt="" class="size-20 shrink-0 rounded-full border border-line bg-bg object-cover" />
+            <img
+              [src]="p.avatar"
+              alt=""
+              class="-mt-10 size-20 shrink-0 rounded-full border-4 border-white bg-bg object-cover shadow sm:size-24"
+            />
           }
-          <div class="min-w-0">
-            <p class="truncate text-[18px] font-bold">{{ p.fullName }}</p>
-            <p class="truncate text-[13px] text-muted" dir="ltr">{{ p.email }}</p>
-            <span class="mt-1.5 inline-block rounded-full bg-mint-light px-3 py-0.5 text-[12px] font-semibold text-mint">
+          <div class="min-w-0 pt-3">
+            <p class="truncate text-[22px] font-bold">{{ p.fullName }}</p>
+            <span
+              class="mt-1 inline-block rounded-full bg-art px-3 py-0.5 text-[12px] font-semibold text-plum"
+            >
               {{ roleText(p.role) }}
             </span>
           </div>
+          <div class="ms-auto">
+            <label
+              class="inline-block cursor-pointer rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink hover:border-plum/40"
+            >
+              {{ busy() === 'photo' ? 'بنرفع الصورة...' : 'غيّر الصورة' }}
+              <input type="file" accept="image/*" class="sr-only" (change)="changePhoto($event)" />
+            </label>
+            <p class="mt-1 text-end text-[11px] text-muted">صورة لحد 2 ميجا</p>
+          </div>
+        </div>
+        @if (photoNote(); as note) {
+          <p
+            class="px-5 pb-4 text-[13px]"
+            [class.text-mint]="note.ok"
+            [class.text-coral]="!note.ok"
+            role="status"
+          >
+            {{ note.text }}
+          </p>
+        }
+      </section>
+
+      <div class="mt-4 grid gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
+        <!-- ===== Right column: his data and the password ===== -->
+        <div class="flex flex-col gap-4">
+          <form
+            class="rounded-[22px] border border-line bg-white p-5"
+            (submit)="$event.preventDefault(); saveName()"
+          >
+            <h2 class="text-[16px] font-bold">بياناتي</h2>
+            <p class="text-[12px] text-muted">الاسم ده اللي بيظهر في شهاداتك.</p>
+            <div class="mt-4 flex items-baseline justify-between">
+              <label for="name" class="text-[13px] font-bold">الاسم الكامل</label>
+              <span class="text-[11px] text-muted">لحد 100 حرف</span>
+            </div>
+            <input
+              id="name"
+              type="text"
+              maxlength="100"
+              [value]="name()"
+              (input)="name.set(text($event))"
+              class="mt-1 w-full rounded-xl border border-line bg-white px-4 py-3 text-[14px] outline-none focus:border-plum"
+            />
+            <div class="mt-4 flex items-baseline justify-between">
+              <label for="email" class="text-[13px] font-bold">الإيميل</label>
+              <span class="text-[11px] text-muted">مش بيتغير من هنا</span>
+            </div>
+            <input
+              id="email"
+              type="text"
+              disabled
+              dir="ltr"
+              [value]="p.email"
+              class="mt-1 w-full rounded-xl border border-line bg-bg px-4 py-3 text-[14px] text-muted"
+            />
+            @if (nameNote(); as note) {
+              <p
+                class="mt-2 text-[13px]"
+                [class.text-mint]="note.ok"
+                [class.text-coral]="!note.ok"
+                role="status"
+              >
+                {{ note.text }}
+              </p>
+            }
+            <button
+              type="submit"
+              [disabled]="busy() === 'name'"
+              class="mt-4 cursor-pointer rounded-full bg-mint px-6 py-2.5 text-[14px] font-bold text-white disabled:opacity-60"
+            >
+              حفظ الاسم
+            </button>
+          </form>
+
+          <form
+            class="rounded-[22px] border border-line bg-white p-5"
+            (submit)="$event.preventDefault(); savePassword()"
+          >
+            <h2 class="text-[16px] font-bold">الباسورد</h2>
+            <p class="text-[12px] text-muted">
+              اكتب الباسورد الحالي والجديد. الجديد بيحلّ محل القديم.
+            </p>
+            <label for="current" class="mt-4 block text-[13px] font-bold">الباسورد الحالي</label>
+            <input
+              id="current"
+              [type]="showPassword() ? 'text' : 'password'"
+              autocomplete="current-password"
+              [value]="currentPassword()"
+              (input)="currentPassword.set(text($event))"
+              class="mt-1 w-full rounded-xl border border-line bg-white px-4 py-3 text-[14px] outline-none focus:border-plum"
+            />
+            <label for="new" class="mt-4 block text-[13px] font-bold"
+              >الباسورد الجديد (6 حروف على الأقل)</label
+            >
+            <input
+              id="new"
+              [type]="showPassword() ? 'text' : 'password'"
+              autocomplete="new-password"
+              [value]="newPassword()"
+              (input)="newPassword.set(text($event))"
+              class="mt-1 w-full rounded-xl border border-line bg-white px-4 py-3 text-[14px] outline-none focus:border-plum"
+            />
+            <button
+              type="button"
+              (click)="showPassword.set(!showPassword())"
+              class="mt-2 cursor-pointer text-[12px] font-medium text-plum"
+            >
+              {{ showPassword() ? 'إخفاء' : 'إظهار' }}
+            </button>
+            @if (passwordNote(); as note) {
+              <p
+                class="mt-2 text-[13px]"
+                [class.text-mint]="note.ok"
+                [class.text-coral]="!note.ok"
+                role="status"
+              >
+                {{ note.text }}
+              </p>
+            }
+            <button
+              type="submit"
+              [disabled]="busy() === 'password'"
+              class="mt-3 block cursor-pointer rounded-full bg-plum px-6 py-2.5 text-[14px] font-bold text-white disabled:opacity-60"
+            >
+              تغيير الباسورد
+            </button>
+          </form>
         </div>
 
-        <label
-          class="mt-4 inline-block cursor-pointer rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink hover:border-plum/40"
-        >
-          {{ busy() === 'photo' ? 'بنرفع الصورة...' : 'غيّر الصورة' }}
-          <input type="file" accept="image/*" class="sr-only" (change)="changePhoto($event)" />
-        </label>
-        <span class="ms-2 text-[12px] text-muted">صورة لحد 2 ميجا</span>
-        @if (photoNote(); as note) {
-          <p class="mt-2 text-[13px]" [class.text-mint]="note.ok" [class.text-coral]="!note.ok" role="status">
-            {{ note.text }}
-          </p>
-        }
-      </section>
+        <!-- ===== Left column: quick links and delete ===== -->
+        <div class="flex flex-col gap-4">
+          <section class="rounded-[22px] border border-line bg-white p-5">
+            <h2 class="text-[16px] font-bold">روابط سريعة</h2>
+            <ul class="mt-2 divide-y divide-line">
+              @if (isStudent) {
+                <li>
+                  <a
+                    routerLink="/my-courses"
+                    class="flex items-center justify-between py-3 text-[14px] font-semibold hover:text-plum"
+                  >
+                    كورساتي <span aria-hidden="true">‹</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    routerLink="/certificates"
+                    class="flex items-center justify-between py-3 text-[14px] font-semibold hover:text-plum"
+                  >
+                    شهاداتي <span aria-hidden="true">‹</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    routerLink="/my-reviews"
+                    class="flex items-center justify-between py-3 text-[14px] font-semibold hover:text-plum"
+                  >
+                    تقييماتي <span aria-hidden="true">‹</span>
+                  </a>
+                </li>
+              }
+              <li>
+                <button
+                  type="button"
+                  (click)="logout()"
+                  class="flex w-full cursor-pointer items-center justify-between py-3 text-[14px] font-semibold hover:text-plum"
+                >
+                  تسجيل الخروج <span aria-hidden="true">‹</span>
+                </button>
+              </li>
+            </ul>
+          </section>
 
-      <!-- ===== Name ===== -->
-      <form class="mt-5 rounded-[22px] border border-line bg-white p-5" (submit)="$event.preventDefault(); saveName()">
-        <label for="name" class="text-[15px] font-bold">الاسم</label>
-        <input
-          id="name"
-          type="text"
-          maxlength="100"
-          [value]="name()"
-          (input)="name.set(text($event))"
-          class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-3 text-[14px] outline-none focus:border-plum"
-        />
-        @if (nameNote(); as note) {
-          <p class="mt-2 text-[13px]" [class.text-mint]="note.ok" [class.text-coral]="!note.ok" role="status">
-            {{ note.text }}
-          </p>
-        }
-        <button
-          type="submit"
-          [disabled]="busy() === 'name'"
-          class="mt-3 rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white disabled:opacity-60"
-        >
-          احفظ الاسم
-        </button>
-      </form>
-
-      <!-- ===== Password ===== -->
-      <form class="mt-5 rounded-[22px] border border-line bg-white p-5" (submit)="$event.preventDefault(); savePassword()">
-        <h2 class="text-[15px] font-bold">تغيير كلمة السر</h2>
-        <label for="current" class="mt-3 block text-[13px] text-muted">كلمة السر الحالية</label>
-        <input
-          id="current"
-          type="password"
-          autocomplete="current-password"
-          [value]="currentPassword()"
-          (input)="currentPassword.set(text($event))"
-          class="mt-1 w-full rounded-xl border border-line bg-white px-4 py-3 text-[14px] outline-none focus:border-plum"
-        />
-        <label for="new" class="mt-3 block text-[13px] text-muted">كلمة السر الجديدة (6 حروف على الأقل)</label>
-        <input
-          id="new"
-          type="password"
-          autocomplete="new-password"
-          [value]="newPassword()"
-          (input)="newPassword.set(text($event))"
-          class="mt-1 w-full rounded-xl border border-line bg-white px-4 py-3 text-[14px] outline-none focus:border-plum"
-        />
-        @if (passwordNote(); as note) {
-          <p class="mt-2 text-[13px]" [class.text-mint]="note.ok" [class.text-coral]="!note.ok" role="status">
-            {{ note.text }}
-          </p>
-        }
-        <button
-          type="submit"
-          [disabled]="busy() === 'password'"
-          class="mt-3 rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white disabled:opacity-60"
-        >
-          غيّر كلمة السر
-        </button>
-      </form>
-
-      <!-- ===== Delete the account: two steps so it cannot happen by accident ===== -->
-      <section class="mt-5 rounded-[22px] border border-coral/40 bg-white p-5">
-        <h2 class="text-[15px] font-bold text-coral">حذف الحساب</h2>
-        <p class="mt-1 text-[13px] leading-6 text-muted">
-          الحذف نهائي ومفيش رجوع فيه. هتخسر كورساتك وتقدمك وشهاداتك.
-        </p>
-        @if (!confirmDelete()) {
-          <button
-            type="button"
-            (click)="confirmDelete.set(true)"
-            class="mt-3 rounded-full border border-coral px-5 py-2.5 text-[14px] font-semibold text-coral"
-          >
-            عايز أحذف حسابي
-          </button>
-        } @else {
-          <form (submit)="$event.preventDefault(); deleteAccount()">
-            <label for="del" class="mt-3 block text-[13px] text-muted">اكتب كلمة السر عشان تأكد</label>
-            <input
-              id="del"
-              type="password"
-              autocomplete="current-password"
-              [value]="deletePassword()"
-              (input)="deletePassword.set(text($event))"
-              class="mt-1 w-full rounded-xl border border-line bg-white px-4 py-3 text-[14px] outline-none focus:border-coral"
-            />
-            @if (deleteNote()) {
-              <p class="mt-2 text-[13px] text-coral" role="alert">{{ deleteNote() }}</p>
-            }
-            <div class="mt-3 flex gap-3">
-              <button
-                type="submit"
-                [disabled]="busy() === 'delete'"
-                class="rounded-full bg-coral px-5 py-2.5 text-[14px] font-semibold text-white disabled:opacity-60"
-              >
-                احذف حسابي نهائيًا
-              </button>
+          <!-- Delete the account: two steps so it cannot happen by accident -->
+          <section class="rounded-[22px] border border-coral/40 bg-white p-5">
+            <h2 class="text-[16px] font-bold text-coral">مسح الحساب</h2>
+            <p class="mt-1 text-[13px] leading-6 text-muted">
+              المسح نهائي ومفيش رجوع فيه. هتخسر كورساتك وتقدمك وشهاداتك.
+            </p>
+            @if (!confirmDelete()) {
               <button
                 type="button"
-                (click)="confirmDelete.set(false); deletePassword.set(''); deleteNote.set('')"
-                class="rounded-full border border-line px-5 py-2.5 text-[14px] font-medium text-ink"
+                (click)="confirmDelete.set(true)"
+                class="mt-3 cursor-pointer rounded-full border border-coral px-5 py-2.5 text-[14px] font-semibold text-coral"
               >
-                إلغاء
+                مسح حسابي
               </button>
-            </div>
-          </form>
-        }
-      </section>
+            } @else {
+              <form (submit)="$event.preventDefault(); deleteAccount()">
+                <label for="del" class="mt-3 block text-[13px] text-muted"
+                  >اكتب الباسورد عشان تأكد</label
+                >
+                <input
+                  id="del"
+                  type="password"
+                  autocomplete="current-password"
+                  [value]="deletePassword()"
+                  (input)="deletePassword.set(text($event))"
+                  class="mt-1 w-full rounded-xl border border-line bg-white px-4 py-3 text-[14px] outline-none focus:border-coral"
+                />
+                @if (deleteNote()) {
+                  <p class="mt-2 text-[13px] text-coral" role="alert">{{ deleteNote() }}</p>
+                }
+                <div class="mt-3 flex gap-3">
+                  <button
+                    type="submit"
+                    [disabled]="busy() === 'delete'"
+                    class="cursor-pointer rounded-full bg-coral px-5 py-2.5 text-[14px] font-semibold text-white disabled:opacity-60"
+                  >
+                    امسح نهائيًا
+                  </button>
+                  <button
+                    type="button"
+                    (click)="confirmDelete.set(false); deletePassword.set(''); deleteNote.set('')"
+                    class="cursor-pointer rounded-full border border-line px-5 py-2.5 text-[14px] font-medium text-ink"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            }
+          </section>
+        </div>
+      </div>
     }
   </main>
 
