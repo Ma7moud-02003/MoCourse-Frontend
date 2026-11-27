@@ -50,6 +50,36 @@ export interface PaymentInfoBody {
 }
 
 // One student who joined a course.
+// One lesson in a student's record.
+export interface StudentLesson {
+  sectionId: number;
+  sectionTitle: string;
+  lessonId: number;
+  title: string;
+  completed: boolean;
+  lastPosition: number;
+}
+
+export interface StudentLessons {
+  totalLessons: number;
+  completedLessons: number;
+  persentage: number;
+  lessons: StudentLesson[];
+}
+
+// The results of one exam: the students who took it, and those who did not start it.
+export interface ExamResults {
+  totalMarks: number;
+  passMark: number;
+  attempts: {
+    student: { id: number };
+    status: string; // submitted or in_progress ...
+    score: number | null;
+    percentage: number | null;
+    passed: boolean | null;
+  }[];
+}
+
 export interface CourseStudent {
   id: number;
   enrolledAt: string;
@@ -96,5 +126,24 @@ export class TeacherService {
     return this.http
       .get<CourseStudent[] | { messsage: string }>(`${API_URL}/enrollment/students/${courseId}`)
       .pipe(map((answer) => (Array.isArray(answer) ? answer : [])));
+  }
+
+  // GET /api/progress/instractor/course_progress/:courseId/:studentId — how far one student got in the course
+  studentProgress(courseId: number, studentId: number) {
+    return this.http.get<{ totalLesoons: number; completedLessons: number; persentage: number }>(
+      `${API_URL}/progress/instractor/course_progress/${courseId}/${studentId}`,
+    );
+  }
+
+  // GET /api/progress/instractor/lessons_progress/:courseId/:studentId — every lesson with done or not
+  studentLessons(courseId: number, studentId: number) {
+    return this.http.get<StudentLessons>(
+      `${API_URL}/progress/instractor/lessons_progress/${courseId}/${studentId}`,
+    );
+  }
+
+  // GET /api/quiz-attempt/exam/:examId/results — who took the exam and who did not
+  examResults(examId: number) {
+    return this.http.get<ExamResults>(`${API_URL}/quiz-attempt/exam/${examId}/results`);
   }
 }

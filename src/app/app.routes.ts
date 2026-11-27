@@ -85,6 +85,13 @@ export const routes: Routes = [
       import('./teacher/requests/payment-requests').then((m) => m.PaymentRequests),
   },
   {
+    // the record of one student in one course
+    path: 'teacher/students/:courseId/:studentId',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./teacher/student-record/student-record').then((m) => m.StudentRecord),
+  },
+  {
     // every student of every course
     path: 'teacher/students',
     canActivate: [authGuard],
