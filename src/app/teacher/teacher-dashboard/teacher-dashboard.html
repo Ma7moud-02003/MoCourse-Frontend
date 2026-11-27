@@ -1,0 +1,93 @@
+<div class="flex min-h-dvh flex-col">
+  <app-header />
+
+  <main class="mx-auto w-full max-w-[1120px] flex-1 px-5 pb-16">
+    <h1 class="mt-8 text-[28px] font-bold leading-10">لوحة المدرّس</h1>
+
+    @if (loading()) {
+      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted">
+        بنجهّز لوحتك...
+      </p>
+    }
+
+    @if (!loading() && error()) {
+      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink">
+        {{ error() }}
+      </p>
+    }
+
+    @if (numbers(); as n) {
+      <!-- The numbers -->
+      <div class="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
+        <div class="rounded-[18px] border border-line bg-white p-4">
+          <p class="text-[12px] text-muted">كورساتك</p>
+          <p class="mt-1 text-[28px] font-bold">{{ n.coursesCount }}</p>
+        </div>
+        <div class="rounded-[18px] border border-line bg-white p-4">
+          <p class="text-[12px] text-muted">الطلاب المشتركين</p>
+          <p class="mt-1 text-[28px] font-bold">{{ n.enrolledStudents }}</p>
+        </div>
+        <div class="rounded-[18px] border border-line bg-white p-4">
+          <p class="text-[12px] text-muted">إجمالي الأرباح</p>
+          <p class="mt-1 text-[28px] font-bold text-mint">{{ n.totalProfite }} ج.م</p>
+        </div>
+        <div class="rounded-[18px] border border-line bg-white p-4">
+          <p class="text-[12px] text-muted">طلبات مستنية موافقتك</p>
+          <p class="mt-1 text-[28px] font-bold">{{ n.wateing_aproave }}</p>
+        </div>
+        <div class="rounded-[18px] border border-line bg-white p-4">
+          <p class="text-[12px] text-muted">طلاب خلّصوا كورس</p>
+          <p class="mt-1 text-[28px] font-bold">{{ n.completedStudents }} / {{ n.totalStudents }}</p>
+        </div>
+        <div class="rounded-[18px] border border-line bg-white p-4">
+          <p class="text-[12px] text-muted">نسبة الإكمال</p>
+          <p class="mt-1 text-[28px] font-bold">{{ n.completionPercentage | number: '1.0-0' }}%</p>
+        </div>
+      </div>
+
+      @if (last(); as l) {
+        <div class="mt-5 grid gap-3 md:grid-cols-2">
+          <!-- The newest purchase waiting for his answer -->
+          <section class="rounded-[22px] border border-line bg-white p-5">
+            <h2 class="text-[18px] font-bold">آخر طلب مستني</h2>
+            @if (l.lastPurchase.length > 0) {
+              <p class="mt-3 text-[15px] font-semibold">{{ l.lastPurchase[0].user.fullName }}</p>
+              <p class="mt-1 text-[13px] leading-7 text-muted">
+                {{ l.lastPurchase[0].course.title }} · {{ l.lastPurchase[0].amount }} ج.م
+              </p>
+              <a routerLink="/teacher" class="mt-3 inline-block text-[13px] font-medium text-plum">
+                افتح كورساتي وراجع الطلبات
+              </a>
+            } @else {
+              <p class="mt-3 text-[14px] text-muted">مفيش طلبات مستنية دلوقتي.</p>
+            }
+          </section>
+
+          <!-- The course students buy most -->
+          <section class="rounded-[22px] border border-line bg-white p-5">
+            <h2 class="text-[18px] font-bold">أكتر كورس اتباع</h2>
+            @if (l.mostCoursePurshaced; as c) {
+              <p class="mt-3 text-[15px] font-semibold">{{ c.courseTitle }}</p>
+              <p class="mt-1 text-[13px] text-muted">{{ c.purchaseCount }} طلب</p>
+            } @else {
+              <p class="mt-3 text-[14px] text-muted">لسه مفيش مبيعات.</p>
+            }
+          </section>
+
+          <!-- The lesson watched most -->
+          <section class="rounded-[22px] border border-line bg-white p-5 md:col-span-2">
+            <h2 class="text-[18px] font-bold">أكتر درس اتشاف</h2>
+            @if (l.mostCompletedLesson; as m) {
+              <p class="mt-3 text-[15px] font-semibold">{{ m.lessonTitle }}</p>
+              <p class="mt-1 text-[13px] text-muted">اتشاف {{ m.watchedCount }} مرة</p>
+            } @else {
+              <p class="mt-3 text-[14px] text-muted">لسه محدش خلّص درس.</p>
+            }
+          </section>
+        </div>
+      }
+    }
+  </main>
+
+  <app-footer />
+  </div>
