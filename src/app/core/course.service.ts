@@ -51,6 +51,26 @@ export interface CourseFilters {
   limit?: number;
 }
 
+// What a teacher fills in to open a new course. The thumbnail travels as a file,
+// so it is kept apart from these fields.
+export interface NewCourse {
+  title: string;
+  describtion: string;
+  price: number;
+  discountPrice: number | null;
+  duration: number;
+  level: CourseLevel;
+  categoryId: number;
+  covers: string[];
+  requirements: string[];
+}
+
+// A category the course can belong to.
+export interface Category {
+  id: number;
+  name: string;
+}
+
 // One place that knows how to talk to the courses part of the backend.
 @Injectable({ providedIn: 'root' })
 export class CourseService {
@@ -69,6 +89,33 @@ export class CourseService {
     params = params.set('page', filters.page ?? 1).set('limit', filters.limit ?? 9);
 
     return this.http.get<Page<CourseCard>>(`${API_URL}/course/all`, { params });
+  }
+
+  // GET /api/category/all — the list a teacher picks from when he opens a course
+  categories() {
+    return this.http.get<Category[]>(`${API_URL}/category/all`);
+  }
+
+  // POST /api/course — a new course with its picture. Every field goes as text,
+  // except the thumbnail which is the file itself.
+  create(course: NewCourse, thumbnail: File) {
+    const form = new FormData();
+    form.append('title', course.title);
+    form.append('describtion', course.describtion);
+    form.append('price', String(course.price));
+    form.append('duration', String(course.duration));
+    form.append('level', course.level);
+    form.append('categoryId', String(course.categoryId));
+    // the backend only ever publishes here: it reads "false" as true, so a draft
+    // cannot be created from the site yet (that needs a backend fix)
+    form.append('isPublished', 'true');
+    if (course.discountPrice) form.append('discountPrice', String(course.discountPrice));
+    // these two are lists on the backend, so each line is sent as its own field
+    for (const cover of course.covers) form.append('covers', cover);
+    for (const requirement of course.requirements) form.append('requirements', requirement);
+    form.append('thumbnail', thumbnail);
+
+    return this.http.post<CourseDetails>(`${API_URL}/course`, form);
   }
 
   // GET /api/course/details/:id — everything one course page needs in one answer.
