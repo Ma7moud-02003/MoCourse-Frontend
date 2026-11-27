@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { CourseDetails, CourseService } from '../../core/course.service';
 import { CurriculumService, Lesson, Section } from '../../core/curriculum.service';
 import { finalPrice, hasDiscount, lessonTime, priceText } from '../../core/course-display';
 import { errorMessage } from '../../core/error-message';
+import { ProgressService } from '../../core/progress.service';
 import { Quiz, QuizService } from '../../core/quiz.service';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
@@ -25,6 +26,8 @@ export class CourseDetailsPage implements OnInit {
   private curriculum = inject(CurriculumService);
   private quizService = inject(QuizService);
   private auth = inject(AuthService);
+  private progress = inject(ProgressService);
+  private router = inject(Router);
 
   // helpers the template uses to show a price and a lesson length
   readonly priceText = priceText;
@@ -91,8 +94,52 @@ export class CourseDetailsPage implements OnInit {
         this.sections.set(page.data);
         // open the first section, so the page does not look empty
         if (page.data.length > 0) this.toggleSection(page.data[0]);
+        // the other sections' lessons come quietly, for the lesson count and the free lesson button
+        page.data.slice(1).forEach((section) => this.fetchLessons(section.id));
       },
       error: () => this.sections.set([]),
+    });
+  }
+
+  private fetchLessons(sectionId: number) {
+    this.curriculum.lessons(sectionId).subscribe({
+      next: (list) => this.lessons.update((all) => ({ ...all, [sectionId]: list })),
+      error: () => {},
+    });
+  }
+
+  // How many lessons we know about (all sections, once they arrived).
+  totalLessons(): number {
+    return Object.values(this.lessons()).reduce((sum, list) => sum + list.length, 0);
+  }
+
+  // The first lesson the teacher left open for everyone: it feeds the "free lesson" button.
+  previewLesson(): Lesson | null {
+    for (const section of this.sections()) {
+      const found = this.lessonsOf(section).find((lesson) => lesson.isPreview);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  // "-22%" for the badge next to the price (null when there is no real discount).
+  discountPercent(course: CourseDetails): number | null {
+    if (!hasDiscount(course)) return null;
+    return Math.round(((course.price - finalPrice(course)) / course.price) * 100);
+  }
+
+  levelText(level: string): string {
+    return { beginner: 'مبتدئ', intermediate: 'متوسط', advanced: 'متقدم' }[level] ?? level;
+  }
+
+  // A student who joined goes back to the lesson he stopped at.
+  continueLearning(courseId: number) {
+    this.progress.resume(courseId).subscribe({
+      next: (point) =>
+        this.router.navigate(
+          point ? ['/courses', courseId, 'lessons', point.lessonId] : ['/courses', courseId],
+        ),
+      error: () => {},
     });
   }
 
