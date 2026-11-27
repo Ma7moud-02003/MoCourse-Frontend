@@ -33,4 +33,25 @@ export class ReviewService {
       { comment, rateing },
     );
   }
+
+  // GET /api/review/myReviews: all the reviews the student wrote.
+  // It does not say which course each one belongs to (see the my-reviews page).
+  mine() {
+    return this.http.get<
+      { id: number; comment: string; rateing: number; createdAt: string; updatedAt: string }[]
+    >(`${API_URL}/review/myReviews`);
+  }
+
+  // PATCH /api/review/update/:courseId/:reviewId
+  update(courseId: number, reviewId: number, comment: string, rateing: number) {
+    return this.http.patch(`${API_URL}/review/update/${courseId}/${reviewId}`, {
+      comment,
+      rateing,
+    });
+  }
+
+  // DELETE /api/review/delete/:courseId/:reviewId
+  remove(courseId: number, reviewId: number) {
+    return this.http.delete(`${API_URL}/review/delete/${courseId}/${reviewId}`);
+  }
 }
