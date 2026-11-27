@@ -52,6 +52,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./courses/lesson-page/lesson-page').then((m) => m.LessonPage),
   },
+  {
+    // one exam: answer its questions and see the score
+    path: 'courses/:courseId/quizzes/:quizId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./courses/quiz-page/quiz-page').then((m) => m.QuizPage),
+  },
   // the old home page is gone; its address now goes to the page for your role
   { path: 'home', pathMatch: 'full', redirectTo: homePage },
   { path: '**', redirectTo: homePage },

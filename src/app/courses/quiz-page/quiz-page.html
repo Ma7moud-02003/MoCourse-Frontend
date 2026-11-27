@@ -1,0 +1,159 @@
+<div class="flex min-h-dvh flex-col">
+  <app-header />
+
+  <main class="mx-auto w-full max-w-[820px] flex-1 px-5 pb-16">
+    <a
+      routerLink="/courses/{{ courseId }}"
+      class="mt-5 inline-flex items-center gap-2 rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum"
+    >
+      <svg
+        aria-hidden="true"
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+      رجوع للكورس
+    </a>
+
+    @if (loading()) {
+      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted">
+        بنجهّز الامتحان...
+      </p>
+    }
+
+    @if (!loading() && errorText() && !result()) {
+      <section class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center">
+        <p class="text-[15px] leading-8 text-ink">{{ errorText() }}</p>
+        <a
+          routerLink="/courses/{{ courseId }}"
+          class="mt-5 inline-block rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white"
+        >
+          ارجع لصفحة الكورس
+        </a>
+      </section>
+    }
+
+    @if (result(); as r) {
+      <section class="mt-6 rounded-[22px] border border-line bg-white p-6 text-center md:p-8">
+        <p class="text-[13px] font-medium text-muted">نتيجة الامتحان</p>
+        <p class="mt-3 text-[40px] font-bold leading-none" [class.text-mint]="r.passed" [class.text-coral]="!r.passed">
+          {{ r.score }} / {{ r.totalMarks }}
+        </p>
+        <p class="mt-3 text-[15px] leading-8 text-ink">{{ passedText(r) }}</p>
+        <p class="mt-1 text-[13px] text-muted">درجة النجاح {{ r.passMark }} من {{ r.totalMarks }}</p>
+        <a
+          routerLink="/courses/{{ courseId }}"
+          class="mt-6 inline-block rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white"
+        >
+          ارجع لصفحة الكورس
+        </a>
+      </section>
+    }
+
+    @if (!loading() && !result() && !errorText() && questions().length > 0) {
+      <div class="mt-5 flex items-center justify-between gap-3">
+        <p class="text-[13px] font-medium text-muted">سؤال {{ current() + 1 }} من {{ questions().length }}</p>
+        <p class="text-[13px] text-muted">
+          جاوبت {{ answeredCount() }} من {{ questions().length }}
+          @if (saving()) {
+            <span class="text-plum">— بنحفظ...</span>
+          }
+        </p>
+      </div>
+
+      <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-line">
+        <div
+          class="h-full rounded-full bg-plum transition-all"
+          [style.width.%]="((current() + 1) / questions().length) * 100"
+        ></div>
+      </div>
+
+      @for (question of questions(); track question.id; let i = $index) {
+        @if (i === current()) {
+          <section class="mt-4 rounded-[22px] border border-line bg-white p-5 md:p-6">
+            <div class="flex items-start justify-between gap-3">
+              <h1 class="text-[17px] font-bold leading-8 md:text-[19px]">{{ question.question }}</h1>
+              <span class="shrink-0 rounded-full bg-bg px-3 py-1 text-[12px] font-medium text-muted">
+                {{ question.mark }} درجة
+              </span>
+            </div>
+
+            <ul class="mt-4 space-y-2.5">
+              @for (choice of question.choices; track choice.id) {
+                <li>
+                  <button
+                    type="button"
+                    (click)="choose(question, choice.id)"
+                    [attr.aria-pressed]="pickedChoice(question.id) === choice.id"
+                    class="flex w-full cursor-pointer items-center gap-3 rounded-xl border-[1.5px] px-4 py-3 text-start text-[15px] transition-colors"
+                    [class.border-mint]="pickedChoice(question.id) === choice.id"
+                    [class.bg-mint-light]="pickedChoice(question.id) === choice.id"
+                    [class.border-line]="pickedChoice(question.id) !== choice.id"
+                  >
+                    <span
+                      aria-hidden="true"
+                      class="grid h-5 w-5 shrink-0 place-items-center rounded-full border-[1.5px]"
+                      [class.border-mint]="pickedChoice(question.id) === choice.id"
+                      [class.border-line]="pickedChoice(question.id) !== choice.id"
+                    >
+                      @if (pickedChoice(question.id) === choice.id) {
+                        <span class="h-2.5 w-2.5 rounded-full bg-mint"></span>
+                      }
+                    </span>
+                    <span>{{ choice.text }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      }
+
+      <div class="mt-5 flex flex-wrap items-center gap-3">
+        @if (current() > 0) {
+          <button
+            type="button"
+            (click)="previous()"
+            class="cursor-pointer rounded-full border border-line bg-white px-5 py-2.5 text-[14px] font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum"
+          >
+            السؤال اللي فات
+          </button>
+        }
+
+        @if (current() < questions().length - 1) {
+          <button
+            type="button"
+            (click)="next()"
+            class="cursor-pointer rounded-full bg-plum px-6 py-2.5 text-[14px] font-semibold text-white"
+          >
+            السؤال اللي بعده
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="submit()"
+            [disabled]="submitting()"
+            class="cursor-pointer rounded-full bg-plum px-6 py-2.5 text-[14px] font-semibold text-white disabled:opacity-60"
+          >
+            {{ submitting() ? 'بنسلّم...' : 'سلّم الامتحان' }}
+          </button>
+        }
+      </div>
+    }
+
+    @if (!loading() && !result() && !errorText() && questions().length === 0) {
+      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted">
+        الامتحان ده لسه مفيش فيه أسئلة.
+      </p>
+    }
+  </main>
+
+  <app-footer />
+  </div>

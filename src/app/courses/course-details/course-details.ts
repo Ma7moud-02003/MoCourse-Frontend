@@ -5,6 +5,7 @@ import { CourseDetails, CourseService } from '../../core/course.service';
 import { CurriculumService, Lesson, Section } from '../../core/curriculum.service';
 import { finalPrice, hasDiscount, lessonTime, priceText } from '../../core/course-display';
 import { errorMessage } from '../../core/error-message';
+import { Quiz, QuizService } from '../../core/quiz.service';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
 
@@ -19,6 +20,7 @@ export class CourseDetailsPage implements OnInit {
   private route = inject(ActivatedRoute);
   private courseService = inject(CourseService);
   private curriculum = inject(CurriculumService);
+  private quizService = inject(QuizService);
 
   // helpers the template uses to show a price and a lesson length
   readonly priceText = priceText;
@@ -38,6 +40,11 @@ export class CourseDetailsPage implements OnInit {
   openSection = signal<number | null>(null);
   lessons = signal<Record<number, Lesson[]>>({});
   lessonsLoading = signal<number | null>(null);
+
+  // The exams of this course, shown under its content.
+  quizzes = signal<Quiz[]>([]);
+  quizzesLoading = signal(true);
+  quizzesNote = signal(''); // one clear line when the list cannot be shown
 
   ngOnInit() {
     this.load();
@@ -59,6 +66,7 @@ export class CourseDetailsPage implements OnInit {
         this.course.set(course);
         this.loading.set(false);
         this.loadSections(id);
+        this.loadQuizzes(id);
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
@@ -103,6 +111,27 @@ export class CourseDetailsPage implements OnInit {
         this.lessonsLoading.set(null);
       },
       error: () => this.lessonsLoading.set(null),
+    });
+  }
+
+  // The exams of this course. A student who is not enrolled gets a 403 from the
+  // backend, and we say that in one plain line instead of an empty box.
+  loadQuizzes(courseId: number) {
+    this.quizzesLoading.set(true);
+    this.quizzesNote.set('');
+    this.quizService.courseQuizzes(courseId).subscribe({
+      next: (list) => {
+        this.quizzes.set(list);
+        this.quizzesLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.quizzesLoading.set(false);
+        this.quizzesNote.set(
+          err.status === 403
+            ? 'الامتحانات بتظهر بعد ما تشترك في الكورس.'
+            : 'مش عارفين نجيب امتحانات الكورس دلوقتي.',
+        );
+      },
     });
   }
 
