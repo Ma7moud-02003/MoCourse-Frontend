@@ -31,7 +31,7 @@
         />
       </svg>
 
-        <p
+      <p
         class="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[13px] font-medium"
       >
         <span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-mint"></span>
@@ -159,62 +159,70 @@
       <ul class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         @for (course of items(); track course.id) {
           <li>
-            <article
-              class="group flex h-full flex-col overflow-hidden rounded-[22px] border border-line bg-white transition duration-200 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(107,45,134,0.55)]"
+            <!-- the whole card is a link to that course's page -->
+            <a
+              [routerLink]="['/courses', course.id]"
+              class="block h-full rounded-[22px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum"
             >
-              <div class="relative aspect-video overflow-hidden bg-art">
-                <img
-                  [src]="course.thumbnail"
-                  [alt]="course.title"
-                  loading="lazy"
-                  width="640"
-                  height="360"
-                  class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                />
-                @if (course.category?.name) {
-                  <span
-                    class="absolute top-3 right-3 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-medium text-plum"
-                  >
-                    {{ course.category?.name }}
-                  </span>
-                }
-                @if (isNew(course.createdAt)) {
-                  <span
-                    class="absolute top-3 left-3 rounded-full bg-coral px-2.5 py-1 text-[12px] font-bold text-white"
-                    >جديد</span
-                  >
-                }
-              </div>
-
-              <div class="flex flex-1 flex-col gap-3 p-4">
-                <h2 class="line-clamp-2 text-[17px] leading-[1.6] font-bold">{{ course.title }}</h2>
-
-                <div class="mt-auto flex items-end justify-between gap-3 pt-1">
-                  <p class="flex min-w-0 items-center gap-2">
+              <article
+                class="group flex h-full flex-col overflow-hidden rounded-[22px] border border-line bg-white transition duration-200 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(107,45,134,0.55)]"
+              >
+                <div class="relative aspect-video overflow-hidden bg-art">
+                  <img
+                    [src]="course.thumbnail"
+                    [alt]="course.title"
+                    loading="lazy"
+                    width="640"
+                    height="360"
+                    class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                  />
+                  @if (course.category?.name) {
                     <span
-                      aria-hidden="true"
-                      class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-mint-light text-[12px] font-bold text-mint"
+                      class="absolute top-3 right-3 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-medium text-plum"
                     >
-                      {{ course.Instractor?.fullName?.charAt(0) }}
+                      {{ course.category?.name }}
                     </span>
-                    <span class="truncate text-[13px] text-muted">{{
-                      course.Instractor?.fullName
-                    }}</span>
-                  </p>
+                  }
+                  @if (isNew(course.createdAt)) {
+                    <span
+                      class="absolute top-3 left-3 rounded-full bg-coral px-2.5 py-1 text-[12px] font-bold text-white"
+                      >جديد</span
+                    >
+                  }
+                </div>
 
-                  <div class="flex shrink-0 flex-col items-start">
-                    <span class="text-[17px] font-bold text-plum">{{
-                      priceText(finalPrice(course))
-                    }}</span>
-                    @if (hasDiscount(course)) {
-                      <span class="text-[12px] text-muted line-through">{{
-                        priceText(course.price)
+                <div class="flex flex-1 flex-col gap-3 p-4">
+                  <h2 class="line-clamp-2 text-[17px] leading-[1.6] font-bold">
+                    {{ course.title }}
+                  </h2>
+
+                  <div class="mt-auto flex items-end justify-between gap-3 pt-1">
+                    <p class="flex min-w-0 items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-mint-light text-[12px] font-bold text-mint"
+                      >
+                        {{ course.Instractor?.fullName?.charAt(0) }}
+                      </span>
+                      <span class="truncate text-[13px] text-muted">{{
+                        course.Instractor?.fullName
                       }}</span>
-                    }
+                    </p>
+
+                    <div class="flex shrink-0 flex-col items-start">
+                      <span class="text-[17px] font-bold text-plum">{{
+                        priceText(finalPrice(course))
+                      }}</span>
+                      @if (hasDiscount(course)) {
+                        <span class="text-[12px] text-muted line-through">{{
+                          priceText(course.price)
+                        }}</span>
+                      }
+                    </div>
                   </div>
                 </div>
-              </div>
-            </article>
+              </article>
+            </a>
           </li>
         }
       </ul>
