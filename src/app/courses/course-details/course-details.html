@@ -212,16 +212,6 @@
                       <ul class="divide-y divide-line">
                         @for (lesson of lessonsOf(section); track lesson.id) {
                           <li class="flex items-center gap-3 py-2.5">
-                            <!-- a lesson he can open is a link to its own page;
-                                 the rest stay plain rows with a lock -->
-                            <a
-                              class="flex flex-1 items-center gap-3 rounded-lg transition-colors"
-                              [class.cursor-pointer]="canPlay(lesson)"
-                              [class.hover:bg-bg]="canPlay(lesson)"
-                              [routerLink]="
-                                canPlay(lesson) ? ['/courses', course()?.id, 'lessons', lesson.id] : null
-                              "
-                            >
                             <!-- a play sign for a lesson he can watch, a lock for the rest -->
                             <span
                               aria-hidden="true"
@@ -250,7 +240,6 @@
                               }
                             </span>
                             <span class="flex-1 text-[14px]">{{ lesson.title }}</span>
-                            </a>
                             @if (lesson.isPreview && !c.isEnrolled) {
                               <span
                                 class="rounded-full bg-mint-light px-2 py-0.5 text-[11px] font-bold text-mint"
@@ -274,7 +263,49 @@
         }
       </section>
     }
+
+    <!-- ===== The exams of this course ===== -->
+    <section class="mt-5 rounded-[22px] border border-line bg-white p-5">
+      <h2 class="text-[18px] font-bold">امتحانات الكورس</h2>
+
+      @if (quizzesLoading()) {
+        <p class="mt-3 text-[14px] text-muted">بنجيب الامتحانات...</p>
+      } @else if (quizzesNote()) {
+        <p class="mt-3 rounded-xl bg-bg px-4 py-3 text-[14px] text-muted">{{ quizzesNote() }}</p>
+      } @else if (quizzes().length === 0) {
+        <p class="mt-3 rounded-xl bg-bg px-4 py-3 text-[14px] text-muted">
+          المدرّس لسه مضافش امتحانات للكورس ده.
+        </p>
+      } @else {
+        <ul class="mt-4 space-y-2.5">
+          @for (quiz of quizzes(); track quiz.id) {
+            <li class="rounded-xl border border-line px-4 py-3.5">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p class="text-[15px] font-semibold">{{ quiz.title }}</p>
+                  @if (quiz.description) {
+                    <p class="mt-1 text-[13px] leading-6 text-muted">{{ quiz.description }}</p>
+                  }
+                </div>
+                <a
+                  routerLink="/courses/{{ course()?.id }}/quizzes/{{ quiz.id }}"
+                  class="rounded-full bg-plum px-4 py-2 text-[13px] font-semibold text-white"
+                >
+                  ابدأ الامتحان
+                </a>
+              </div>
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-muted">
+                <span class="rounded-full bg-bg px-2.5 py-0.5">درجة النجاح {{ quiz.passMark }}</span>
+                <span class="rounded-full bg-bg px-2.5 py-0.5">من {{ quiz.totalMarks }} درجة</span>
+                <span class="rounded-full bg-bg px-2.5 py-0.5">{{ quiz.timeLimit }} دقيقة</span>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
   </main>
+
 
   <app-footer />
 </div>
