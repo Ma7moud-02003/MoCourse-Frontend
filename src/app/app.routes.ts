@@ -46,6 +46,12 @@ export const routes: Routes = [
       import('./courses/certificate-view/certificate-view').then((m) => m.CertificateView),
   },
   {
+    // the user's notifications (students and teachers)
+    path: 'notifications',
+    canActivate: [authGuard],
+    loadComponent: () => import('./notifications/notifications').then((m) => m.Notifications),
+  },
+  {
     // one course: its details and its lessons
     path: 'courses/:id',
     canActivate: [authGuard],
