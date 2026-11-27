@@ -66,6 +66,10 @@ export class CourseExams implements OnInit {
       next: (exams) => {
         this.list.set(exams);
         this.loading.set(false);
+        // coming from the exams list: open the exam he picked
+        const wanted = Number(this.route.snapshot.queryParamMap.get('exam'));
+        const exam = exams.find((item) => item.id === wanted);
+        if (exam && !this.openExam()) this.showQuestions(exam);
       },
       error: () => {
         this.loading.set(false);
@@ -242,6 +246,17 @@ export class CourseExams implements OnInit {
           this.questionError.set(this.saveError(err));
         },
       });
+  }
+
+  // Remove one question of a draft exam.
+  removeQuestion(question: ExamQuestion) {
+    this.exams.deleteQuestion(question.id).subscribe({
+      next: () => {
+        this.loadQuestions();
+        this.loadExams(); // the total marks changed
+      },
+      error: (err: HttpErrorResponse) => this.questionError.set(this.saveError(err)),
+    });
   }
 
   // Change the minutes of a draft exam. The backend refuses once a student started it.

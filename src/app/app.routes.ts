@@ -132,6 +132,12 @@ export const routes: Routes = [
       import('./teacher/course-content/course-content').then((m) => m.CourseContent),
   },
   {
+    // all the exams of all his courses
+    path: 'teacher/exams',
+    canActivate: [authGuard],
+    loadComponent: () => import('./teacher/exams-list/exams-list').then((m) => m.ExamsList),
+  },
+  {
     // a teacher builds the exams of his course
     path: 'teacher/courses/:id/exams',
     canActivate: [authGuard],

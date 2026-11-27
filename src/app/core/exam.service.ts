@@ -89,4 +89,27 @@ export class ExamService {
   addQuestion(examId: number, question: NewQuestion) {
     return this.http.post(`${API_URL}/question`, { quizId: examId, questions: [question] });
   }
+
+  // PATCH /api/quiz/:id — changes the name, description, pass mark or minutes of an exam
+  update(
+    examId: number,
+    changes: { title?: string; description?: string; passMark?: number; timeLimit?: number },
+  ) {
+    return this.http.patch<TeacherExam>(`${API_URL}/quiz/${examId}`, changes);
+  }
+
+  // DELETE /api/quiz/:id — the backend refuses (409) once a student started the exam
+  delete(examId: number) {
+    return this.http.delete(`${API_URL}/quiz/${examId}`);
+  }
+
+  // GET /api/quiz/insQuizes — all the exams of all his courses
+  all() {
+    return this.http.get<TeacherExam[]>(`${API_URL}/quiz/insQuizes`);
+  }
+
+  // DELETE /api/question/:id
+  deleteQuestion(questionId: number) {
+    return this.http.delete(`${API_URL}/question/${questionId}`);
+  }
 }
