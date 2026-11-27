@@ -29,6 +29,20 @@ export interface Page<T> {
   totalPages: number;
 }
 
+// What GET /api/course/details/:id sends back: the whole course page needs this one,
+// plus two flags that tell us what this student is allowed to see.
+export interface CourseDetails extends CourseCard {
+  describtion: string;
+  duration: number;
+  level: CourseLevel;
+  covers: string[];
+  requirements: string[];
+  isPublished: boolean;
+  quizzes: { id: number; title: string; isPublished: boolean }[];
+  isEnrolled: boolean; // a student who already joined the course
+  canAccess: boolean; // the teacher who owns it (or an admin)
+}
+
 // What the page can filter by. Everything is optional: what we do not send, the backend ignores.
 export interface CourseFilters {
   title?: string;
@@ -55,5 +69,11 @@ export class CourseService {
     params = params.set('page', filters.page ?? 1).set('limit', filters.limit ?? 9);
 
     return this.http.get<Page<CourseCard>>(`${API_URL}/course/all`, { params });
+  }
+
+  // GET /api/course/details/:id — everything one course page needs in one answer.
+  // A draft course answers 404 unless we own it or already joined it.
+  details(id: number) {
+    return this.http.get<CourseDetails>(`${API_URL}/course/details/${id}`);
   }
 }
