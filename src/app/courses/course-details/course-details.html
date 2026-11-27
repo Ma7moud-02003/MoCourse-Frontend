@@ -105,10 +105,6 @@
             }
           </div>
 
-          <p class="mt-3 text-[13px] leading-[1.8] text-muted">
-            الاشتراك بيدوي: بتحوّل المبلغ لرقم المدرّس وتشوف بيانات الدفع من صفحة الكورس، وهو بيفعّل
-            الكورس بعد ما يتأكد.
-          </p>
         </div>
 
         <img
@@ -120,9 +116,12 @@
         />
       </section>
 
-      <!-- ===== What the student will learn + what he needs ===== -->
-      @if (c.covers?.length || c.requirements?.length) {
+      <!-- ===== Joining the course + what he will learn + what he needs ===== -->
+      @if (canJoin() || c.covers?.length || c.requirements?.length) {
         <div class="mt-5 grid gap-5 md:grid-cols-2">
+          @if (canJoin()) {
+            <app-course-enroll [courseId]="c.id" [price]="finalPrice(c)" />
+          }
           @if (c.covers?.length) {
             <section class="rounded-[22px] border border-line bg-white p-5">
               <h2 class="mb-3 text-[17px] font-bold">هتتعلم إيه</h2>
