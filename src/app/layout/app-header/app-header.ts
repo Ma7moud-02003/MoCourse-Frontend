@@ -32,6 +32,13 @@ import { AuthService } from '../../core/auth.service';
           >
             كورساتي
           </a>
+          <a
+            routerLink="/certificates"
+            routerLinkActive="bg-white text-plum shadow-[0_2px_10px_-4px_rgba(107,45,134,0.35)]"
+            class="rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-plum"
+          >
+            شهاداتي
+          </a>
         </nav>
 
         <button

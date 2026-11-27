@@ -33,6 +33,19 @@ export const routes: Routes = [
     loadComponent: () => import('./courses/my-courses/my-courses').then((m) => m.MyCourses),
   },
   {
+    // the certificates a student earned
+    path: 'certificates',
+    canActivate: [authGuard],
+    loadComponent: () => import('./courses/certificates/certificates').then((m) => m.Certificates),
+  },
+  {
+    // one certificate, ready to print
+    path: 'certificates/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./courses/certificate-view/certificate-view').then((m) => m.CertificateView),
+  },
+  {
     // one course: its details and its lessons
     path: 'courses/:id',
     canActivate: [authGuard],
