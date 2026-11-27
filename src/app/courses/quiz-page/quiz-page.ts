@@ -82,6 +82,14 @@ export class QuizPage implements OnInit {
 
   private showStartError(err: HttpErrorResponse) {
     this.loading.set(false);
+
+    // An exam he already finished answers 409, but the answer still carries the score.
+    const body = err.error as { result?: QuizResult } | null;
+    if (err.status === 409 && body?.result) {
+      this.result.set(body.result);
+      return;
+    }
+
     if (err.status === 403) {
       this.errorText.set('الامتحان ده للطلبة المشتركين في الكورس. اشترك الأول وبعدها تقدر تدخله.');
     } else if (err.status === 409) {
