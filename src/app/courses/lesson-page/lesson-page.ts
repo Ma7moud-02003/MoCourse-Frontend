@@ -5,6 +5,7 @@ import { CurriculumService, Lesson, Section } from '../../core/curriculum.servic
 import { lessonTime } from '../../core/course-display';
 import { errorMessage } from '../../core/error-message';
 import { LessonDetails, LessonService } from '../../core/lesson.service';
+import { Quiz, QuizService } from '../../core/quiz.service';
 import { CourseProgress, ProgressService } from '../../core/progress.service';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
@@ -26,6 +27,7 @@ export class LessonPage implements OnInit {
   private lessons = inject(LessonService);
   private curriculum = inject(CurriculumService);
   private progress = inject(ProgressService);
+  private quizService = inject(QuizService);
 
   lesson = signal<LessonDetails | null>(null);
   loading = signal(true);
@@ -40,6 +42,11 @@ export class LessonPage implements OnInit {
   previousLesson = computed(() => this.neighbour(-1));
   nextLesson = computed(() => this.neighbour(1));
   private allLessons = computed(() => this.outline().flatMap((group) => group.lessons));
+
+  // The ids of the lessons he finished (for the check marks in the outline),
+  // and the exams of the course (they need him to be enrolled, so they may stay empty).
+  doneIds = signal<number[]>([]);
+  quizzes = signal<Quiz[]>([]);
 
   // Progress. It stays empty for a lesson he cannot track (a preview before he joins).
   done = signal(false);
@@ -68,12 +75,15 @@ export class LessonPage implements OnInit {
         this.loading.set(false);
         this.loadOutline(this.courseId);
         this.loadProgress();
+        this.loadQuizzes();
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         // 401 means the lesson is real but needs a subscription (the backend says so).
         if (err.status === 401) {
-          this.errorText.set('الدرس ده جزء من كورس مدفوع. اشترك في الكورس الأول وبعدها تقدر تفتحه.');
+          this.errorText.set(
+            'الدرس ده جزء من كورس مدفوع. اشترك في الكورس الأول وبعدها تقدر تفتحه.',
+          );
         } else if (err.status === 404) {
           this.errorText.set('الدرس مش موجود أو مش متاح لك.');
         } else {
@@ -95,6 +105,18 @@ export class LessonPage implements OnInit {
       error: () => undefined,
     });
     this.refreshCourseProgress();
+  }
+
+  private loadQuizzes() {
+    this.quizService.courseQuizzes(this.courseId).subscribe({
+      next: (list) => this.quizzes.set(list),
+      error: () => this.quizzes.set([]),
+    });
+  }
+
+  // How many lessons of one section he finished, like "2/6".
+  sectionDone(group: OutlineGroup): number {
+    return group.lessons.filter((lesson) => this.doneIds().includes(lesson.id)).length;
   }
 
   private refreshCourseProgress() {
@@ -136,6 +158,7 @@ export class LessonPage implements OnInit {
   private markDone(completed: boolean) {
     if (completed && !this.done()) {
       this.done.set(true);
+      this.doneIds.update((ids) => [...ids, this.lessonId]);
       this.refreshCourseProgress();
     }
   }
@@ -157,8 +180,20 @@ export class LessonPage implements OnInit {
   private loadLessons(section: Section) {
     this.curriculum.lessons(section.id).subscribe({
       next: (lessons) => {
+        // ask which of these lessons he finished (it fails when he is not enrolled, then nothing is ticked)
+        for (const lesson of lessons) {
+          this.progress.lesson(lesson.id).subscribe({
+            next: (p) => {
+              if (p.completed)
+                this.doneIds.update((ids) => (ids.includes(lesson.id) ? ids : [...ids, lesson.id]));
+            },
+            error: () => undefined,
+          });
+        }
         this.outline.update((groups) =>
-          groups.map((group) => (group.section.id === section.id ? { section: group.section, lessons } : group)),
+          groups.map((group) =>
+            group.section.id === section.id ? { section: group.section, lessons } : group,
+          ),
         );
       },
       // a section we cannot read just stays out of the outline; the lesson itself still shows
