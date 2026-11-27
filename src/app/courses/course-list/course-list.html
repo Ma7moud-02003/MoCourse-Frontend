@@ -1,0 +1,248 @@
+<!-- The top bar (logo, links, log out) -->
+<div class="flex min-h-dvh flex-col">
+  <app-header />
+
+  <main class="mx-auto w-full max-w-[1120px] flex-1 px-5 pb-16">
+    <!-- ===== Hero: one short line of motivation + the search box ===== -->
+    <section
+      class="relative mt-6 overflow-hidden rounded-[26px] bg-plum px-6 py-9 text-white md:px-10 md:py-11"
+    >
+      <!-- soft shapes, only decoration (aria-hidden so screen readers skip them) -->
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute -top-28 -left-20 h-64 w-64 rounded-full bg-mint/25 blur-3xl"
+      ></div>
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute -bottom-32 right-1/3 h-64 w-64 rounded-full bg-white/10 blur-3xl"
+      ></div>
+      <svg
+        aria-hidden="true"
+        class="pointer-events-none absolute bottom-5 left-6 hidden h-20 w-40 text-mint/50 md:block"
+        viewBox="0 0 160 80"
+        fill="none"
+      >
+        <path
+          d="M2 70c22 0 26-52 48-52s24 40 44 40 24-26 44-26"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-dasharray="6 8"
+        />
+      </svg>
+
+        <p
+        class="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[13px] font-medium"
+      >
+        <span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-mint"></span>
+        تعلّم على راحتك
+      </p>
+
+      <h1 class="max-w-[520px] text-[26px] leading-[1.45] font-bold md:text-[33px]">
+        اختار كورسك، وخلّي النهارده أول خطوة
+      </h1>
+      <p class="mt-2 max-w-[470px] text-[15px] leading-[1.9] text-white/80">
+        كل كورس هنا مشروح خطوة بخطوة، وتبدأ من أي مستوى يناسبك وتكمّل على راحتك.
+      </p>
+
+      <label class="relative mt-6 block max-w-[520px]">
+        <span class="sr-only">ابحث عن كورس</span>
+        <svg
+          aria-hidden="true"
+          class="pointer-events-none absolute top-1/2 right-4 h-5 w-5 -translate-y-1/2 text-muted"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-3.6-3.6" />
+        </svg>
+        <input
+          type="search"
+          [value]="search()"
+          (input)="onSearch($any($event.target).value)"
+          placeholder="دوّر على كورس... مثلًا: الرياضيات"
+          class="w-full rounded-2xl border-0 bg-white py-3.5 pr-12 pl-4 text-ink placeholder:text-muted focus:ring-4 focus:ring-mint/40 focus:outline-none"
+        />
+      </label>
+    </section>
+
+    <!-- ===== The level filters + how many courses there are ===== -->
+    <section class="mt-7 flex flex-wrap items-center gap-3">
+      <div role="group" aria-label="فلترة بالمستوى" class="flex flex-wrap gap-2">
+        @for (item of levels; track item.value) {
+          <button
+            type="button"
+            (click)="setLevel(item.value)"
+            [attr.aria-pressed]="level() === item.value"
+            class="cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum"
+            [class.border-plum]="level() === item.value"
+            [class.bg-plum]="level() === item.value"
+            [class.text-white]="level() === item.value"
+            [class.border-line]="level() !== item.value"
+            [class.bg-white]="level() !== item.value"
+            [class.text-ink]="level() !== item.value"
+          >
+            {{ item.label }}
+          </button>
+        }
+      </div>
+      <p class="ms-auto text-sm text-muted" aria-live="polite">{{ resultsText() }}</p>
+    </section>
+
+    <!-- ===== The list: error, or loading, or empty, or the cards ===== -->
+    @if (error()) {
+      <div role="alert" class="mt-8 rounded-2xl border border-line bg-white px-6 py-10 text-center">
+        <p class="text-[15px] font-medium text-alert-ink">{{ error() }}</p>
+        <button
+          type="button"
+          (click)="load()"
+          class="mt-4 cursor-pointer rounded-xl bg-plum px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-plum-dark"
+        >
+          جرّب تاني
+        </button>
+      </div>
+    } @else if (loading()) {
+      <!-- Grey placeholder cards so the page does not jump when the data arrives -->
+      <ul class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        @for (item of skeletons; track item) {
+          <li class="overflow-hidden rounded-[22px] border border-line bg-white">
+            <div class="aspect-video animate-pulse bg-art"></div>
+            <div class="space-y-3 p-4">
+              <div class="h-4 w-3/4 animate-pulse rounded bg-art"></div>
+              <div class="h-4 w-1/2 animate-pulse rounded bg-art"></div>
+            </div>
+          </li>
+        }
+      </ul>
+    } @else if (items().length === 0) {
+      <div class="mt-8 rounded-[26px] border border-line bg-white px-6 py-14 text-center">
+        <span
+          class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-mint-light text-mint"
+        >
+          <svg
+            aria-hidden="true"
+            width="30"
+            height="30"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
+            <path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5" />
+          </svg>
+        </span>
+        <h2 class="text-[19px] font-bold">مفيش كورسات هنا لسه</h2>
+        <p class="mx-auto mt-2 max-w-[360px] text-[15px] leading-[1.8] text-muted">
+          @if (hasFilters()) {
+            مفيش نتيجة للبحث ده. جرّب كلمة تانية أو امسح الفلاتر.
+          } @else {
+            لسه مفيش كورسات منشورة. أول ما تنزل هتلاقيها هنا.
+          }
+        </p>
+        @if (hasFilters()) {
+          <button
+            type="button"
+            (click)="clearFilters()"
+            class="mt-5 cursor-pointer rounded-xl border border-plum/30 bg-white px-5 py-2.5 text-sm font-bold text-plum transition-colors hover:bg-plum hover:text-white"
+          >
+            امسح الفلاتر
+          </button>
+        }
+      </div>
+    } @else {
+      <ul class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        @for (course of items(); track course.id) {
+          <li>
+            <article
+              class="group flex h-full flex-col overflow-hidden rounded-[22px] border border-line bg-white transition duration-200 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(107,45,134,0.55)]"
+            >
+              <div class="relative aspect-video overflow-hidden bg-art">
+                <img
+                  [src]="course.thumbnail"
+                  [alt]="course.title"
+                  loading="lazy"
+                  width="640"
+                  height="360"
+                  class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                />
+                @if (course.category?.name) {
+                  <span
+                    class="absolute top-3 right-3 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-medium text-plum"
+                  >
+                    {{ course.category?.name }}
+                  </span>
+                }
+                @if (isNew(course.createdAt)) {
+                  <span
+                    class="absolute top-3 left-3 rounded-full bg-coral px-2.5 py-1 text-[12px] font-bold text-white"
+                    >جديد</span
+                  >
+                }
+              </div>
+
+              <div class="flex flex-1 flex-col gap-3 p-4">
+                <h2 class="line-clamp-2 text-[17px] leading-[1.6] font-bold">{{ course.title }}</h2>
+
+                <div class="mt-auto flex items-end justify-between gap-3 pt-1">
+                  <p class="flex min-w-0 items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-mint-light text-[12px] font-bold text-mint"
+                    >
+                      {{ course.Instractor?.fullName?.charAt(0) }}
+                    </span>
+                    <span class="truncate text-[13px] text-muted">{{
+                      course.Instractor?.fullName
+                    }}</span>
+                  </p>
+
+                  <div class="flex shrink-0 flex-col items-start">
+                    <span class="text-[17px] font-bold text-plum">{{
+                      priceText(finalPrice(course))
+                    }}</span>
+                    @if (hasDiscount(course)) {
+                      <span class="text-[12px] text-muted line-through">{{
+                        priceText(course.price)
+                      }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            </article>
+          </li>
+        }
+      </ul>
+
+      <!-- ===== Pages ===== -->
+      @if (totalPages() > 1) {
+        <nav class="mt-9 flex items-center justify-center gap-3" aria-label="التنقل بين الصفحات">
+          <button
+            type="button"
+            (click)="goToPage(page() - 1)"
+            [disabled]="page() === 1"
+            class="cursor-pointer rounded-xl border border-line bg-white px-4 py-2 text-sm font-medium transition-colors hover:border-plum/40 hover:text-plum disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            السابق
+          </button>
+          <span class="text-sm text-muted">صفحة {{ page() }} من {{ totalPages() }}</span>
+          <button
+            type="button"
+            (click)="goToPage(page() + 1)"
+            [disabled]="page() === totalPages()"
+            class="cursor-pointer rounded-xl border border-line bg-white px-4 py-2 text-sm font-medium transition-colors hover:border-plum/40 hover:text-plum disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            التالي
+          </button>
+        </nav>
+      }
+    }
+  </main>
+
+  <app-footer />
+  </div>
