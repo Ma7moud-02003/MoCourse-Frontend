@@ -10,12 +10,13 @@ import { Quiz, QuizService } from '../../core/quiz.service';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
 import { CourseEnroll } from './course-enroll/course-enroll';
+import { CourseReviews } from './course-reviews/course-reviews';
 
 // One course page: what the course is about, who teaches it, and its content
 // (sections, and the lessons inside each section).
 @Component({
   selector: 'app-course-details',
-  imports: [RouterLink, AppHeader, AppFooter, CourseEnroll],
+  imports: [RouterLink, AppHeader, AppFooter, CourseEnroll, CourseReviews],
   templateUrl: './course-details.html',
 })
 export class CourseDetailsPage implements OnInit {

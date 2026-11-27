@@ -314,6 +314,11 @@
         </ul>
       }
     </section>
+
+    <!-- ===== What students said about the course ===== -->
+    @if (course(); as c) {
+      <app-course-reviews [courseId]="c.id" [canWrite]="c.isEnrolled" />
+    }
   </main>
 
 
