@@ -1,0 +1,174 @@
+<div class="flex min-h-dvh flex-col">
+  <app-header />
+
+  <main class="mx-auto w-full max-w-[860px] flex-1 px-5 pb-16">
+    <a
+      routerLink="/teacher"
+      class="mt-5 inline-flex items-center gap-2 rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum"
+    >
+      <svg
+        aria-hidden="true"
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+      رجوع للوحة المدرّس
+    </a>
+
+    <section class="mt-4 rounded-[22px] border border-line bg-white p-5 md:p-6">
+      <h1 class="text-[21px] font-bold leading-9">كورس جديد</h1>
+      <p class="mt-1 text-[13.5px] leading-7 text-muted">
+        اكتب بيانات الكورس، وبعد ما تحفظ هتقدر تضيف أقسام ودروس وامتحانات من صفحة الكورس.
+      </p>
+
+      <div class="mt-5 grid gap-4 md:grid-cols-2">
+        <label class="block md:col-span-2">
+          <span class="text-[13px] font-medium">اسم الكورس</span>
+          <input
+            type="text"
+            [value]="title()"
+            (input)="title.set($any($event.target).value)"
+            placeholder="مثال: أساسيات البرمجة بلغة بايثون"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
+
+        <label class="block md:col-span-2">
+          <span class="text-[13px] font-medium">وصف الكورس</span>
+          <textarea
+            rows="4"
+            [value]="describtion()"
+            (input)="describtion.set($any($event.target).value)"
+            placeholder="الطالب هيتعلم إيه في الكورس ده؟"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none placeholder:text-muted/70 focus:border-plum"
+          ></textarea>
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">القسم</span>
+          <select
+            [value]="categoryId() ?? ''"
+            (change)="categoryId.set(+$any($event.target).value)"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
+          >
+            @for (category of categories(); track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">المستوى</span>
+          <select
+            [value]="level()"
+            (change)="level.set($any($event.target).value)"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
+          >
+            @for (item of levels; track item.value) {
+              <option [value]="item.value">{{ item.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">السعر (بالجنيه)</span>
+          <input
+            type="number"
+            min="100"
+            max="10000"
+            [value]="price()"
+            (input)="price.set($any($event.target).value)"
+            placeholder="350"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">سعر بعد الخصم (اختياري)</span>
+          <input
+            type="number"
+            min="100"
+            max="10000"
+            [value]="discountPrice()"
+            (input)="discountPrice.set($any($event.target).value)"
+            placeholder="199"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">مدة الكورس</span>
+          <input
+            type="number"
+            min="5"
+            max="1000"
+            [value]="duration()"
+            (input)="duration.set($any($event.target).value)"
+            placeholder="180"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
+
+        <label class="block md:col-span-2">
+          <span class="text-[13px] font-medium">هتتعلم إيه (كل نقطة في سطر)</span>
+          <textarea
+            rows="3"
+            [value]="covers()"
+            (input)="covers.set($any($event.target).value)"
+            placeholder="تكتب أول برنامج بايثون&#10;تفهم المتغيرات والشروط"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none placeholder:text-muted/70 focus:border-plum"
+          ></textarea>
+        </label>
+
+        <label class="block md:col-span-2">
+          <span class="text-[13px] font-medium">محتاج تعرف قبل ما تبدأ (كل نقطة في سطر)</span>
+          <textarea
+            rows="3"
+            [value]="requirements()"
+            (input)="requirements.set($any($event.target).value)"
+            placeholder="جهاز كمبيوتر أو موبايل&#10;الرغبة في التعلم"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none placeholder:text-muted/70 focus:border-plum"
+          ></textarea>
+        </label>
+
+        <label class="block md:col-span-2">
+          <span class="text-[13px] font-medium">صورة الكورس</span>
+          <input
+            type="file"
+            accept="image/*"
+            (change)="onThumbnail($event)"
+            class="mt-1.5 w-full cursor-pointer rounded-xl border-[1.5px] border-line bg-white px-3 py-2.5 text-[13px] text-muted file:me-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-art file:px-3 file:py-1.5 file:text-[12.5px] file:font-medium file:text-plum"
+          />
+          @if (thumbnail(); as file) {
+            <span class="mt-1.5 block text-[12px] text-mint">اخترت: {{ file.name }}</span>
+          }
+        </label>
+      </div>
+
+      @if (errorText()) {
+        <p class="mt-4 rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink">{{ errorText() }}</p>
+      }
+
+      <div class="mt-5 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          (click)="save()"
+          [disabled]="saving()"
+          class="cursor-pointer rounded-full bg-plum px-6 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+        >
+          {{ saving() ? 'بنحفظ الكورس...' : 'احفظ الكورس' }}
+        </button>
+        <a routerLink="/teacher" class="text-[13.5px] font-medium text-muted hover:text-plum">إلغاء</a>
+      </div>
+    </section>
+  </main>
+
+  <app-footer />
+  </div>
