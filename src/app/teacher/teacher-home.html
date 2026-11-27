@@ -48,6 +48,12 @@
                   </p>
                 </div>
                 <a
+                  [routerLink]="['/teacher/courses', course.id, 'content']"
+                  class="shrink-0 rounded-full bg-plum px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-plum-dark"
+                >
+                  المحتوى
+                </a>
+                <a
                   [routerLink]="['/courses', course.id]"
                   class="shrink-0 rounded-full border border-line px-3 py-1.5 text-[12.5px] font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum"
                 >

@@ -46,6 +46,13 @@ export const routes: Routes = [
     loadComponent: () => import('./teacher/course-form/course-form').then((m) => m.CourseForm),
   },
   {
+    // a teacher adds sections and lessons to his course
+    path: 'teacher/courses/:id/content',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./teacher/course-content/course-content').then((m) => m.CourseContent),
+  },
+  {
     // the admin area: where an admin lands after login
     path: 'admin',
     canActivate: [authGuard],
