@@ -17,7 +17,12 @@ export interface Lesson {
   order: number;
   duration: number | null; // seconds
   isPreview: boolean; // the teacher lets everyone watch this one
-  type?: 'video' | 'pdf' | 'text'; // only the course owner gets this field
+  type?: 'video' | 'pdf' | 'text'; // only the course owner gets this field and the next ones
+  description?: string | null;
+  content?: string | null; // the written lesson (text type)
+  videoUrl?: string | null; // empty until the video is uploaded
+  pdfUrl?: string | null; // empty until the PDF is uploaded
+  fileSize?: number | null;
 }
 
 // What the teacher sends to open a new lesson.
@@ -70,5 +75,28 @@ export class CurriculumService {
     const body = new FormData();
     body.append('file', file);
     return this.http.patch<Lesson>(`${API_URL}/lesson/uploadFile/${lessonId}`, body);
+  }
+
+  // PATCH /api/lesson/update/:id — changes the name, the text or the free-preview switch of a lesson
+  updateLesson(
+    lessonId: number,
+    changes: { title?: string; description?: string; isPreview?: boolean; content?: string },
+  ) {
+    return this.http.patch<Lesson>(`${API_URL}/lesson/update/${lessonId}`, changes);
+  }
+
+  // DELETE /api/lesson/delete/:id — the backend refuses when a student already took an exam in it
+  deleteLesson(lessonId: number) {
+    return this.http.delete(`${API_URL}/lesson/delete/${lessonId}`);
+  }
+
+  // PATCH /api/section/update/:id — renames a section
+  renameSection(sectionId: number, title: string) {
+    return this.http.patch<Section>(`${API_URL}/section/update/${sectionId}`, { title });
+  }
+
+  // DELETE /api/section/delete/:id — removes the section with all its lessons
+  deleteSection(sectionId: number) {
+    return this.http.delete(`${API_URL}/section/delete/${sectionId}`);
   }
 }
