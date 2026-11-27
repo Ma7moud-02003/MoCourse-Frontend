@@ -60,6 +60,15 @@
     @if (!loading() && !result() && !errorText() && questions().length > 0) {
       <!-- ===== What he is answering: the exam title and what it is worth ===== -->
       <section class="mt-4 rounded-[22px] border border-line bg-white p-5">
+        @if (secondsLeft() !== null) {
+          <p
+            class="mb-3 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[14px] font-bold"
+            [class]="secondsLeft()! <= 60 ? 'bg-alert-bg text-alert-ink' : 'bg-art text-plum'"
+            role="timer"
+          >
+            الوقت المتبقي <span dir="ltr">{{ clock(secondsLeft()!) }}</span>
+          </p>
+        }
         <h1 class="text-[19px] font-bold leading-8">
           {{ quiz() ? quiz()!.title : 'امتحان الكورس' }}
         </h1>
