@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime } from 'rxjs';
 import { CourseCard, CourseLevel, CourseService } from '../../core/course.service';
@@ -28,7 +29,7 @@ const LEVELS: { value: CourseLevel | ''; label: string }[] = [
 
 @Component({
   selector: 'app-course-list',
-  imports: [AppHeader, AppFooter],
+  imports: [AppHeader, AppFooter, RouterLink],
   templateUrl: './course-list.html',
 })
 export class CourseList implements OnInit {

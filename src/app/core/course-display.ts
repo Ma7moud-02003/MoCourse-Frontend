@@ -32,3 +32,11 @@ export function coursesCountText(total: number): string {
   if (total <= 10) return `${total} كورسات`;
   return `${total} كورس`;
 }
+
+// A lesson length in seconds -> "12:30". Nothing is shown when the teacher did not set one.
+export function lessonTime(seconds: number | null): string {
+  if (!seconds || seconds <= 0) return '';
+  const minutes = Math.floor(seconds / 60);
+  const rest = Math.floor(seconds % 60);
+  return `${minutes}:${rest.toString().padStart(2, '0')}`;
+}
