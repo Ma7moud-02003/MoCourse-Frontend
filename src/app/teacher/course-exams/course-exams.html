@@ -1,0 +1,273 @@
+<div class="flex min-h-dvh flex-col">
+  <app-header />
+
+  <main class="mx-auto w-full max-w-[860px] flex-1 px-5 pb-16">
+    <a
+      routerLink="/teacher"
+      class="mt-5 inline-flex items-center gap-2 rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum"
+    >
+      رجوع للوحة المدرّس
+    </a>
+
+    <!-- ===== new exam ===== -->
+    <section class="mt-4 rounded-[22px] border border-line bg-white p-5 md:p-6">
+      <h1 class="text-[21px] font-bold leading-9">امتحانات الكورس</h1>
+      @if (courseTitle()) {
+        <p class="mt-1 text-[14px] font-medium text-plum">{{ courseTitle() }}</p>
+      }
+      <p class="mt-1 text-[13.5px] leading-7 text-muted">
+        الامتحان بيتفتح ويتقفل في الوقت اللي تحدده، وللطالب محاولة واحدة. اعمل الامتحان، ضيف أسئلته،
+        وبعدين انشره.
+      </p>
+
+      <div class="mt-5 grid gap-4 md:grid-cols-2">
+        <label class="block md:col-span-2">
+          <span class="text-[13px] font-medium">اسم الامتحان</span>
+          <input
+            type="text"
+            [value]="title()"
+            (input)="title.set($any($event.target).value)"
+            placeholder="مثال: امتحان الوحدة الأولى"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
+
+        <label class="block md:col-span-2">
+          <span class="text-[13px] font-medium">وصف أو تعليمات (اختياري)</span>
+          <textarea
+            rows="2"
+            [value]="description()"
+            (input)="description.set($any($event.target).value)"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none focus:border-plum"
+          ></textarea>
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">بيتفتح في</span>
+          <input
+            type="datetime-local"
+            [value]="opensAt()"
+            (input)="opensAt.set($any($event.target).value)"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
+          />
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">بيتقفل في</span>
+          <input
+            type="datetime-local"
+            [value]="closesAt()"
+            (input)="closesAt.set($any($event.target).value)"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
+          />
+        </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">درجة النجاح (من 100)</span>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            [value]="passMark()"
+            (input)="passMark.set($any($event.target).value)"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
+          />
+        </label>
+      </div>
+
+      <p class="mt-3 text-[12.5px] leading-6 text-muted">
+        ملحوظة: السيرفر مبيحسبش مدة لكل طالب. القفل بيحصل للكل في نفس الوقت، ووقت القفل هو آخر ميعاد
+        للتسليم.
+      </p>
+
+      @if (examError()) {
+        <p class="mt-3 text-[13px] text-red-700" role="alert">{{ examError() }}</p>
+      }
+      <button
+        type="button"
+        (click)="createExam()"
+        [disabled]="creating()"
+        class="mt-4 cursor-pointer rounded-full bg-plum px-6 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+      >
+        {{ creating() ? 'بنحفظ...' : 'اعمل الامتحان' }}
+      </button>
+    </section>
+
+    <!-- ===== the exams of this course ===== -->
+    <section class="mt-4 rounded-[22px] border border-line bg-white p-5">
+      <h2 class="text-[17px] font-bold">الامتحانات</h2>
+      @if (loading()) {
+        <p class="mt-3 text-[14px] text-muted">بنحمّل الامتحانات...</p>
+      } @else if (loadFailed()) {
+        <p class="mt-3 text-[14px] text-muted">مقدرناش نحمّل الامتحانات، جرّب تاني.</p>
+      } @else if (list().length === 0) {
+        <p class="mt-3 text-[14px] text-muted">لسه مفيش امتحانات في الكورس ده.</p>
+      } @else {
+        <ul class="mt-3 divide-y divide-line">
+          @for (exam of list(); track exam.id) {
+            <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div class="min-w-0">
+                <p class="truncate text-[14px] font-semibold">{{ exam.title }}</p>
+                <p class="mt-0.5 text-[12.5px] text-muted">
+                  {{ exam.isPublished ? 'منشور' : 'مسودة' }} · من {{ when(exam.opensAt) }} لحد
+                  {{ when(exam.closesAt) }} · {{ exam.totalMarks }} درجة
+                </p>
+              </div>
+              <button
+                type="button"
+                (click)="showQuestions(exam)"
+                class="shrink-0 cursor-pointer rounded-full border border-line px-3.5 py-1.5 text-[12.5px] font-medium transition-colors hover:border-plum/40 hover:text-plum"
+              >
+                الأسئلة
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- ===== questions of the open exam ===== -->
+    @if (openExam(); as exam) {
+      <section class="mt-4 rounded-[22px] border border-line bg-white p-5 md:p-6">
+        <h2 class="text-[17px] font-bold">أسئلة: {{ exam.title }}</h2>
+
+        <ol class="mt-3 flex flex-col gap-3">
+          @for (question of questions(); track question.id) {
+            <li class="rounded-2xl bg-art/50 p-4">
+              <p class="text-[14px] font-semibold">
+                {{ question.order }}. {{ question.question }}
+                <span class="text-[12.5px] font-normal text-muted">({{ question.mark }} درجة)</span>
+              </p>
+              <ul class="mt-2 flex flex-col gap-1 text-[13.5px]">
+                @for (choice of question.choices; track choice.id) {
+                  <li [class]="choice.isCorrect ? 'font-semibold text-plum' : 'text-muted'">
+                    {{ choice.isCorrect ? '✓' : '•' }} {{ choice.text }}
+                  </li>
+                }
+              </ul>
+            </li>
+          } @empty {
+            <li class="text-[13.5px] text-muted">لسه مفيش أسئلة. ضيف أول سؤال من تحت.</li>
+          }
+        </ol>
+
+        @if (exam.isPublished) {
+          <p class="mt-4 text-[13.5px] text-muted">
+            الامتحان منشور، والأسئلة مبقتش تتضاف. لو طالب بدأ الامتحان مفيش تعديل.
+          </p>
+        } @else {
+          <!-- ===== new question ===== -->
+          <div class="mt-4 grid gap-3 rounded-2xl border border-line p-4">
+            <h3 class="text-[14.5px] font-bold">سؤال جديد</h3>
+
+            <div class="flex gap-2">
+              <button
+                type="button"
+                (click)="chooseKind('mcq')"
+                [class]="
+                  kind() === 'mcq'
+                    ? 'cursor-pointer rounded-full bg-plum px-4 py-1.5 text-[13px] font-semibold text-white'
+                    : 'cursor-pointer rounded-full border border-line bg-white px-4 py-1.5 text-[13px] font-medium'
+                "
+              >
+                اختيار من متعدد
+              </button>
+              <button
+                type="button"
+                (click)="chooseKind('true_false')"
+                [class]="
+                  kind() === 'true_false'
+                    ? 'cursor-pointer rounded-full bg-plum px-4 py-1.5 text-[13px] font-semibold text-white'
+                    : 'cursor-pointer rounded-full border border-line bg-white px-4 py-1.5 text-[13px] font-medium'
+                "
+              >
+                صح أو غلط
+              </button>
+            </div>
+
+            <label class="block">
+              <span class="text-[13px] font-medium">نص السؤال</span>
+              <textarea
+                rows="2"
+                [value]="questionText()"
+                (input)="questionText.set($any($event.target).value)"
+                class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none focus:border-plum"
+              ></textarea>
+            </label>
+
+            <div class="grid gap-2">
+              <span class="text-[13px] font-medium">الاختيارات (علّم على الإجابة الصح)</span>
+              @if (kind() === 'true_false') {
+                @for (label of ['صح', 'غلط']; track label; let i = $index) {
+                  <label class="flex items-center gap-2 text-[14px]">
+                    <input type="radio" name="correct" [checked]="correct() === i" (change)="correct.set(i)" />
+                    {{ label }}
+                  </label>
+                }
+              } @else {
+                @for (text of choiceTexts(); track $index; let i = $index) {
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="correct"
+                      [checked]="correct() === i"
+                      (change)="correct.set(i)"
+                      [attr.aria-label]="'الإجابة الصح هي الاختيار ' + (i + 1)"
+                    />
+                    <input
+                      type="text"
+                      [value]="text"
+                      (input)="setChoice(i, $any($event.target).value)"
+                      [placeholder]="'الاختيار ' + (i + 1)"
+                      class="w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2 text-[14px] outline-none focus:border-plum"
+                    />
+                  </div>
+                }
+              }
+            </div>
+
+            <label class="block max-w-[180px]">
+              <span class="text-[13px] font-medium">درجة السؤال</span>
+              <input
+                type="number"
+                min="1"
+                [value]="mark()"
+                (input)="mark.set($any($event.target).value)"
+                class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2 text-[14px] outline-none focus:border-plum"
+              />
+            </label>
+
+            @if (questionError()) {
+              <p class="text-[13px] text-red-700" role="alert">{{ questionError() }}</p>
+            }
+            <div>
+              <button
+                type="button"
+                (click)="addQuestion()"
+                [disabled]="savingQuestion()"
+                class="cursor-pointer rounded-full bg-plum px-5 py-2 text-[13.5px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+              >
+                {{ savingQuestion() ? 'بنحفظ...' : 'ضيف السؤال' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- ===== publish ===== -->
+          @if (publishError()) {
+            <p class="mt-3 text-[13px] text-red-700" role="alert">{{ publishError() }}</p>
+          }
+          <button
+            type="button"
+            (click)="publish()"
+            [disabled]="publishing()"
+            class="mt-4 cursor-pointer rounded-full border border-plum px-6 py-2.5 text-[14px] font-semibold text-plum transition-colors hover:bg-art disabled:opacity-60"
+          >
+            {{ publishing() ? 'بننشر...' : 'انشر الامتحان للطلاب' }}
+          </button>
+        }
+      </section>
+    }
+  </main>
+
+  <app-footer />
+  </div>
