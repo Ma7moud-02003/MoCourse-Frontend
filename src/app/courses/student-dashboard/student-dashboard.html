@@ -2,83 +2,229 @@
   <app-header />
 
   <main class="mx-auto w-full max-w-[1120px] flex-1 px-5 pb-16">
-    <h1 class="mt-8 text-[28px] font-bold leading-10">لوحتي</h1>
+    <p class="mt-6 text-[12px] text-muted">الرئيسية</p>
 
     @if (loading()) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted">
-        بنجهّز لوحتك...
+      <p
+        class="mt-4 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted"
+      >
+        بنجهّز صفحتك...
       </p>
     }
 
     @if (!loading() && error()) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink">
+      <p
+        class="mt-4 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink"
+      >
         {{ error() }}
       </p>
     }
 
     @if (data(); as d) {
-      <!-- The numbers -->
-      <div class="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div class="rounded-[18px] border border-line bg-white p-4">
-          <p class="text-[12px] text-muted">كورساتي</p>
-          <p class="mt-1 text-[28px] font-bold">{{ d.coursesNumDetails.total }}</p>
-        </div>
-        <div class="rounded-[18px] border border-line bg-white p-4">
-          <p class="text-[12px] text-muted">شغّال فيها</p>
-          <p class="mt-1 text-[28px] font-bold">{{ d.coursesNumDetails.inProgress }}</p>
-        </div>
-        <div class="rounded-[18px] border border-line bg-white p-4">
-          <p class="text-[12px] text-muted">خلّصتها</p>
-          <p class="mt-1 text-[28px] font-bold text-mint">{{ d.coursesNumDetails.completed }}</p>
-        </div>
-        <div class="rounded-[18px] border border-line bg-white p-4">
-          <p class="text-[12px] text-muted">نسبة الكورسات اللي خلّصتها</p>
-          <p class="mt-1 text-[28px] font-bold">{{ d.coursesNumDetails.persentage }}%</p>
-        </div>
-      </div>
+      <!-- ===== Hero: continue where he stopped ===== -->
+      <section
+        class="mt-3 grid overflow-hidden rounded-[26px] border border-line bg-white md:grid-cols-[1fr_1.1fr]"
+      >
+        <div class="p-6 md:p-8">
+          <p class="text-[13px] text-muted">أهلًا يا {{ firstName() || 'صديقي' }}</p>
+          @if (d.coursesNumDetails.total > 0 && d.lastCourses.length > 0) {
+            <h1 class="mt-1 text-[24px] font-bold leading-10 text-plum md:text-[28px]">
+              كمّلي من آخر مكان وقفتي فيه
+            </h1>
+            <p class="mt-1 text-[13px] text-muted">درس واحد النهارده بيفرق. افتح درسك وكمّل.</p>
 
-      @if (d.coursesNumDetails.total === 0) {
-        <section class="mt-5 rounded-[22px] border border-line bg-white px-5 py-10 text-center">
-          <p class="text-[15px] leading-8 text-ink">لسه مااشتركتش في أي كورس.</p>
-          <a routerLink="/courses" class="mt-5 inline-block rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white">
-            شوف الكورسات
-          </a>
-        </section>
-      } @else {
-        <!-- Where he stopped -->
-        @if (d.lastLesson && d.lastCourses.length > 0) {
-          <section class="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[22px] border border-line bg-white p-5">
-            <div>
-              <p class="text-[12px] text-muted">آخر درس وصلت له</p>
-              <p class="mt-1 text-[17px] font-bold leading-8">{{ d.lastLesson.lesson.title }}</p>
+            <div class="mt-5 rounded-[18px] border border-line p-4">
+              <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="truncate text-[15px] font-bold">{{ d.lastCourses[0].course.title }}</p>
+                  @if (d.lastLesson) {
+                    <p class="mt-1 truncate text-[12px] text-muted">
+                      آخر درس: {{ d.lastLesson.lesson.title }}
+                    </p>
+                  }
+                </div>
+                <span
+                  aria-hidden="true"
+                  class="grid size-10 shrink-0 place-items-center rounded-full bg-plum text-white"
+                >
+                  <svg viewBox="0 0 24 24" class="size-4" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+              </div>
+              @if (lastProgress(); as p) {
+                <div class="mt-4 h-2 overflow-hidden rounded-full bg-art" dir="ltr">
+                  <div class="h-full rounded-full bg-plum" [style.width.%]="p.persentage"></div>
+                </div>
+                <div class="mt-1.5 flex justify-between text-[12px] text-muted">
+                  <span>{{ p.completedLessons }} من {{ p.totalLesoons }} درس</span>
+                  <span>{{ p.persentage }}%</span>
+                </div>
+              }
             </div>
+
             <button
               type="button"
               (click)="continueLearning(d.lastCourses[0].course.id)"
-              class="rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white"
+              class="mt-5 rounded-full bg-plum px-6 py-3 text-[14px] font-semibold text-white transition-colors hover:bg-plum-dark"
             >
-              كمّل من حيث وقفت
+              كمّلي الدرس
             </button>
-          </section>
-        }
+          } @else {
+            <h1 class="mt-1 text-[24px] font-bold leading-10 text-plum md:text-[28px]">
+              يلا نبدأ أول كورس
+            </h1>
+            <p class="mt-2 text-[14px] leading-7 text-muted">
+              لسه مااشتركتش في أي كورس. شوف الكورسات واختار اللي يناسبك.
+            </p>
+            <a
+              routerLink="/courses"
+              class="mt-5 inline-block rounded-full bg-plum px-6 py-3 text-[14px] font-semibold text-white hover:bg-plum-dark"
+            >
+              تصفّح الكورسات
+            </a>
+          }
+        </div>
 
-        <!-- The newest courses -->
-        <section class="mt-5 rounded-[22px] border border-line bg-white p-5">
-          <div class="flex items-center justify-between gap-3">
-            <h2 class="text-[18px] font-bold">آخر كورساتك</h2>
-            <a routerLink="/my-courses" class="text-[13px] font-medium text-plum">كل كورساتي</a>
+        <!-- The picture side. A simple drawing for now: the real illustration comes in step 5. -->
+        <div aria-hidden="true" class="hidden place-items-center bg-art md:grid">
+          <svg viewBox="0 0 240 160" class="h-44 w-64">
+            <rect x="40" y="30" width="160" height="100" rx="14" fill="#6b2d86" />
+            <rect x="50" y="40" width="140" height="80" rx="8" fill="#55226d" />
+            <circle cx="120" cy="80" r="20" fill="#fff" />
+            <path d="M114 70v20l17-10z" fill="#6b2d86" />
+            <circle cx="200" cy="40" r="16" fill="#2fb58c" />
+            <path
+              d="M193 40l5 5 9-10"
+              stroke="#fff"
+              stroke-width="3"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+      </section>
+
+      <!-- ===== The numbers ===== -->
+      <div class="mt-4 grid grid-cols-3 gap-3 md:grid-cols-4">
+        <div class="rounded-[18px] border border-line bg-white p-3 md:p-4">
+          <p class="text-[24px] font-bold text-plum md:text-[28px]">
+            {{ d.coursesNumDetails.total }}
+          </p>
+          <p class="text-[12px] text-muted">كورسات اشتركت فيها</p>
+        </div>
+        <div class="rounded-[18px] border border-line bg-white p-3 md:p-4">
+          <p class="text-[24px] font-bold text-plum md:text-[28px]">
+            {{ d.coursesNumDetails.inProgress }}
+          </p>
+          <p class="text-[12px] text-muted">بتعلمها دلوقتي</p>
+        </div>
+        <div class="rounded-[18px] border border-line bg-white p-3 md:p-4">
+          <p class="text-[24px] font-bold text-mint md:text-[28px]">
+            {{ d.coursesNumDetails.completed }}
+          </p>
+          <p class="text-[12px] text-muted">خلّصتهم</p>
+        </div>
+        <div
+          class="col-span-3 flex items-center justify-between gap-3 rounded-[18px] bg-[#fdebe4] p-4 md:col-span-1"
+        >
+          <p class="text-[12px] leading-6 text-[#a3402a]">نسبة الكورسات اللي خلّصتها</p>
+          <div class="relative grid size-16 shrink-0 place-items-center">
+            <svg viewBox="0 0 36 36" class="absolute inset-0 -rotate-90" aria-hidden="true">
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#fff" stroke-width="4" />
+              <circle
+                cx="18"
+                cy="18"
+                r="15.9"
+                fill="none"
+                stroke="#ec6a52"
+                stroke-width="4"
+                stroke-linecap="round"
+                pathLength="100"
+                [attr.stroke-dasharray]="d.coursesNumDetails.persentage + ' 100'"
+              />
+            </svg>
+            <span class="text-[13px] font-bold text-[#a3402a]"
+              >{{ d.coursesNumDetails.persentage }}%</span
+            >
           </div>
-          <ul class="mt-3 space-y-2.5">
+        </div>
+      </div>
+
+      <!-- ===== The newest courses ===== -->
+      @if (d.lastCourses.length > 0) {
+        <section class="mt-8">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-[20px] font-bold">آخر كورساتك</h2>
+            <a routerLink="/my-courses" class="text-[13px] font-medium text-plum">كل كورساتي ‹</a>
+          </div>
+          <ul class="mt-3 grid gap-3 md:grid-cols-2">
             @for (item of d.lastCourses; track item.id) {
               <li>
                 <a
                   [routerLink]="['/courses', item.course.id]"
-                  class="flex items-center justify-between gap-3 rounded-xl border border-line px-4 py-3 transition-colors hover:border-plum/40"
+                  class="flex overflow-hidden rounded-[18px] border border-line bg-white transition-colors hover:border-plum/40"
                 >
-                  <span class="text-[15px] font-semibold">{{ item.course.title }}</span>
-                  @if (item.status === 'completed') {
-                    <span class="shrink-0 rounded-full bg-mint-light px-3 py-1 text-[12px] font-semibold text-mint">خلّصته</span>
-                  }
+                  <img
+                    [src]="item.course.thumbnail"
+                    alt=""
+                    class="h-auto w-28 shrink-0 object-cover"
+                  />
+                  <span class="min-w-0 flex-1 p-4">
+                    <span class="block truncate text-[15px] font-bold">{{
+                      item.course.title
+                    }}</span>
+                    @if (item.status === 'completed') {
+                      <span
+                        class="mt-2 inline-block rounded-full bg-mint-light px-3 py-1 text-[12px] font-semibold text-mint"
+                        >خلّصته</span
+                      >
+                    } @else {
+                      <span class="mt-3 block h-1.5 overflow-hidden rounded-full bg-art" dir="ltr">
+                        <span
+                          class="block h-full rounded-full bg-plum"
+                          [style.width.%]="progressOf()[item.course.id] ?? 0"
+                        ></span>
+                      </span>
+                      <span class="mt-1 block text-[12px] text-muted"
+                        >{{ progressOf()[item.course.id] ?? 0 }}%</span
+                      >
+                    }
+                  </span>
+                </a>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <!-- ===== Suggestions ===== -->
+      @if (suggestions().length > 0) {
+        <section class="mt-8">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-[20px] font-bold">اقتراحات من تخصّصك</h2>
+            <a routerLink="/courses" class="text-[13px] font-medium text-plum">تصفّح الكل ‹</a>
+          </div>
+          <ul class="mt-3 grid grid-cols-3 gap-3 md:grid-cols-4">
+            @for (course of suggestions(); track course.id) {
+              <li>
+                <a
+                  [routerLink]="['/courses', course.id]"
+                  class="block overflow-hidden rounded-[18px] border border-line bg-white transition-colors hover:border-plum/40"
+                >
+                  <img [src]="course.thumbnail" alt="" class="aspect-video w-full object-cover" />
+                  <span class="block p-3">
+                    <span class="line-clamp-2 min-h-12 text-[14px] font-bold leading-6">{{
+                      course.title
+                    }}</span>
+                    <span class="mt-2 flex items-baseline gap-2">
+                      <span class="text-[15px] font-bold">{{ price(course) }} ج.م</span>
+                      @if (price(course) !== course.price) {
+                        <span class="text-[12px] text-muted line-through">{{ course.price }}</span>
+                      }
+                    </span>
+                  </span>
                 </a>
               </li>
             }
