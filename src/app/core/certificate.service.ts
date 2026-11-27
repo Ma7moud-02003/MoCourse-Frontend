@@ -14,7 +14,21 @@ export interface CertificateSummary {
 // One certificate with the names that are printed on it.
 export interface CertificateDetails extends CertificateSummary {
   student: { id: number; fullName: string };
-  course: { id: number; title: string; duration: number | null; Instractor: { id: number; fullName: string } | null };
+  course: {
+    id: number;
+    title: string;
+    duration: number | null;
+    Instractor: { id: number; fullName: string } | null;
+  };
+}
+
+// The answer of the check: a real certificate has its number, or else a "message" saying there is none.
+export interface CertificateCheck {
+  message?: string;
+  certificateNumber?: string;
+  issuedAt?: string;
+  courseTitle?: string;
+  student?: { fullName: string };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -29,5 +43,12 @@ export class CertificateService {
   // GET /api/certificate/:id (only the owner can read it)
   one(id: number) {
     return this.http.get<CertificateDetails>(`${API_URL}/certificate/${id}`);
+  }
+
+  // GET /api/certificate/verify/:number (any logged-in user can check a number)
+  verify(number: string) {
+    return this.http.get<CertificateCheck>(
+      `${API_URL}/certificate/verify/${encodeURIComponent(number)}`,
+    );
   }
 }

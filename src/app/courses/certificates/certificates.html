@@ -2,46 +2,196 @@
   <app-header />
 
   <main class="mx-auto w-full max-w-[1120px] flex-1 px-5 pb-16">
-    <h1 class="mt-8 text-[28px] font-bold leading-10">شهاداتي</h1>
-    <p class="mt-1 text-[14px] text-muted">الشهادات اللي خدتها بعد ما خلّصت كورسات.</p>
+    <p class="mt-6 text-[12px] text-muted">الرئيسية ‹ شهاداتي</p>
+    <h1 class="mt-2 text-[26px] font-bold leading-10">شهاداتي</h1>
+    <p class="text-[14px] text-muted">الشهادات اللي حصلتي عليها لحد دلوقتي.</p>
+
+    <!-- Intro card (a drawing comes in step 5) -->
+    <section
+      class="mt-4 rounded-[22px] border border-line bg-white p-5 md:flex md:items-center md:gap-5 md:p-6"
+    >
+      <div
+        aria-hidden="true"
+        class="mb-4 grid h-24 place-items-center rounded-2xl bg-art md:mb-0 md:h-28 md:w-48 md:shrink-0"
+      >
+        <svg viewBox="0 0 80 60" class="h-16">
+          <rect
+            x="10"
+            y="8"
+            width="60"
+            height="42"
+            rx="6"
+            fill="#fff"
+            stroke="#6b2d86"
+            stroke-width="3"
+          />
+          <circle cx="40" cy="26" r="9" fill="#2fb58c" />
+          <path
+            d="M35 26l4 4 7-8"
+            stroke="#fff"
+            stroke-width="3"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path d="M20 42h40" stroke="#ded4e6" stroke-width="3" stroke-linecap="round" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-[20px] font-bold text-plum">شهاداتك بتثبت اللي تعبتي فيه</h2>
+        <p class="mt-1 text-[13px] leading-7 text-muted">
+          كل كورس بتخلّصيه بتاخدي عليه شهادة برقم فريد، وأي حد يقدر يتأكد منها.
+        </p>
+      </div>
+    </section>
 
     @if (loading()) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted">
+      <p
+        class="mt-5 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted"
+      >
         بنجيب شهاداتك...
       </p>
     }
 
     @if (!loading() && error()) {
-      <p class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink">
+      <p
+        class="mt-5 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink"
+      >
         {{ error() }}
       </p>
     }
 
-    @if (!loading() && !error() && items().length === 0) {
-      <section class="mt-6 rounded-[22px] border border-line bg-white px-5 py-10 text-center">
-        <p class="text-[15px] leading-8 text-ink">لسه معندكش شهادات. الشهادة بتظهر هنا لما تخلّص الكورس.</p>
-        <a routerLink="/my-courses" class="mt-5 inline-block rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white">
-          كورساتي
-        </a>
-      </section>
-    }
+    @if (!loading() && !error()) {
+      <div class="mt-5 grid items-start gap-5 md:grid-cols-[1fr_320px]">
+        <!-- The chosen certificate -->
+        <section class="rounded-[22px] border border-line bg-white p-4 md:order-1">
+          @if (items().length === 0) {
+            <div class="px-3 py-10 text-center">
+              <p class="text-[15px] leading-8 text-ink">
+                لسه معندكيش شهادات. الشهادة بتظهر هنا لما تخلّصي الكورس.
+              </p>
+              <a
+                routerLink="/my-courses"
+                class="mt-5 inline-block rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white"
+                >كورساتي</a
+              >
+            </div>
+          } @else if (selected(); as c) {
+            <div class="rounded-[18px] border-2 border-plum p-1.5">
+              <div class="rounded-[14px] border border-plum/30 px-5 py-8 text-center">
+                <p class="text-[13px] font-semibold tracking-wide text-mint">MoCourse</p>
+                <h2 class="mt-2 text-[24px] font-bold text-plum">شهادة إتمام</h2>
+                <p class="mt-4 text-[12px] text-muted">بتشهد MoCourse إن</p>
+                <p class="mt-1 text-[24px] font-bold">{{ c.student.fullName }}</p>
+                <p class="mt-3 text-[12px] text-muted">أتمّ بنجاح كورس</p>
+                <p
+                  class="mx-auto mt-1 inline-block rounded-full bg-art px-4 py-1.5 text-[15px] font-bold text-plum"
+                >
+                  {{ c.courseTitle }}
+                </p>
+                @if (c.course.Instractor) {
+                  <p class="mt-3 text-[12px] text-muted">
+                    تقديم {{ c.course.Instractor.fullName }}
+                  </p>
+                }
+                <div class="mt-6 flex justify-between gap-3 text-[12px]">
+                  <p class="text-start">
+                    <span class="block text-muted">رقم الشهادة</span
+                    ><span dir="ltr" class="font-bold">{{ c.certificateNumber }}</span>
+                  </p>
+                  <p class="text-end">
+                    <span class="block text-muted">تاريخ الإصدار</span
+                    ><span class="font-bold">{{ dateText(c.issuedAt) }}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3 flex justify-end">
+              <a
+                [routerLink]="['/certificates', c.id]"
+                class="rounded-full bg-plum px-6 py-2.5 text-[14px] font-semibold text-white hover:bg-plum-dark"
+                >عرض الشهادة</a
+              >
+            </div>
+          } @else {
+            <p class="px-3 py-10 text-center text-[14px] text-muted">بنجيب الشهادة...</p>
+          }
+        </section>
 
-    <ul class="mt-6 grid gap-4 md:grid-cols-2">
-      @for (item of items(); track item.id) {
-        <li class="rounded-[22px] border border-line bg-white p-5">
-          <p class="text-[12px] font-semibold text-mint">شهادة إتمام</p>
-          <h2 class="mt-1 text-[17px] font-bold leading-8">{{ item.courseTitle }}</h2>
-          <p class="mt-2 text-[13px] text-muted">اتصدرت في {{ dateText(item.issuedAt) }}</p>
-          <p class="mt-1 text-[13px] text-muted">رقم الشهادة: <span dir="ltr">{{ item.certificateNumber }}</span></p>
-          <a
-            [routerLink]="['/certificates', item.id]"
-            class="mt-4 inline-block rounded-full bg-plum px-5 py-2.5 text-[14px] font-semibold text-white"
-          >
-            اعرض الشهادة
-          </a>
-        </li>
-      }
-    </ul>
+        <div class="space-y-4 md:order-2">
+          <!-- The list -->
+          @if (items().length > 0) {
+            <ul class="overflow-hidden rounded-[22px] border border-line bg-white">
+              @for (item of items(); track item.id) {
+                <li class="border-b border-line last:border-b-0">
+                  <button
+                    type="button"
+                    (click)="select(item.id)"
+                    class="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-start"
+                    [class]="selectedId() === item.id ? 'bg-art' : 'bg-white'"
+                  >
+                    <span class="min-w-0">
+                      <span class="block truncate text-[14px] font-bold">{{
+                        item.courseTitle
+                      }}</span>
+                      <span class="block text-[12px] text-muted"
+                        ><span dir="ltr">{{ item.certificateNumber }}</span> ·
+                        {{ dateText(item.issuedAt) }}</span
+                      >
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
+          <!-- Check a number -->
+          <section class="rounded-[22px] border border-line bg-white p-5">
+            <h2 class="text-[16px] font-bold">اتأكدي من شهادة</h2>
+            <p class="mt-1 text-[12px] text-muted">اكتبي رقم الشهادة ونقولك إذا كانت صحيحة.</p>
+            <form class="mt-3 flex gap-2" (submit)="$event.preventDefault(); check(number.value)">
+              <input
+                #number
+                type="text"
+                dir="ltr"
+                placeholder="Mo-"
+                aria-label="رقم الشهادة"
+                class="min-w-0 flex-1 rounded-xl border border-line px-3 py-2.5 text-[14px] focus:border-plum focus:outline-none"
+              />
+              <button
+                type="submit"
+                [disabled]="checking()"
+                class="shrink-0 cursor-pointer rounded-xl bg-mint px-5 text-[14px] font-bold text-white disabled:opacity-60"
+              >
+                {{ checking() ? '...' : 'تحقق' }}
+              </button>
+            </form>
+            @if (checkError()) {
+              <p
+                class="mt-3 rounded-xl bg-alert-bg px-3 py-2.5 text-[13px] leading-7 text-alert-ink"
+              >
+                {{ checkError() }}
+              </p>
+            }
+            @if (checkResult(); as r) {
+              @if (r.certificateNumber) {
+                <p
+                  class="mt-3 rounded-xl bg-mint-light px-3 py-2.5 text-[13px] leading-7 font-semibold text-mint"
+                >
+                  ✓ الشهادة صحيحة · صادرة لـ {{ r.student?.fullName }} · {{ r.courseTitle }}
+                </p>
+              } @else {
+                <p
+                  class="mt-3 rounded-xl bg-alert-bg px-3 py-2.5 text-[13px] leading-7 text-alert-ink"
+                >
+                  مفيش شهادة بالرقم ده. راجعي الرقم وجرّبي تاني.
+                </p>
+              }
+            }
+          </section>
+        </div>
+      </div>
+    }
   </main>
 
   <app-footer />
