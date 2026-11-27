@@ -1,7 +1,7 @@
 <div class="flex min-h-dvh flex-col">
   <app-header />
 
-  <main class="mx-auto w-full max-w-[900px] flex-1 px-5 pb-16">
+  <main class="mx-auto w-full max-w-[1120px] flex-1 px-5 pb-16">
     <!-- Back to the course we came from -->
     <a
       routerLink="/courses/{{ courseId }}"
@@ -43,80 +43,142 @@
       </section>
     }
 
-    <!-- ===== The lesson ===== -->
+    <!-- ===== The lesson, with the course outline beside it on a wide screen ===== -->
     @if (!loading() && lesson(); as item) {
-      <section class="mt-5 rounded-[22px] border border-line bg-white p-5 md:p-7">
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="rounded-full bg-mint-light px-3 py-1 text-[12px] font-semibold text-mint">
-            {{ typeLabel(item.type) }}
-          </span>
-          @if (lessonTime(item.duration)) {
-            <span class="rounded-full bg-bg px-3 py-1 text-[12px] font-medium text-muted">
-              {{ lessonTime(item.duration) }}
-            </span>
-          }
-          @if (item.isPreview) {
-            <span class="rounded-full bg-art px-3 py-1 text-[12px] font-medium text-plum">درس متاح للكل</span>
+      <div class="mt-5 flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-6">
+        <div class="min-w-0 flex-1">
+          <section class="rounded-[22px] border border-line bg-white p-5 md:p-7">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="rounded-full bg-mint-light px-3 py-1 text-[12px] font-semibold text-mint">
+                {{ typeLabel(item.type) }}
+              </span>
+              @if (lessonTime(item.duration)) {
+                <span class="rounded-full bg-bg px-3 py-1 text-[12px] font-medium text-muted">
+                  {{ lessonTime(item.duration) }}
+                </span>
+              }
+              @if (item.isPreview) {
+                <span class="rounded-full bg-art px-3 py-1 text-[12px] font-medium text-plum">درس متاح للكل</span>
+              }
+            </div>
+
+            <h1 class="mt-3 text-[24px] font-bold leading-10 md:text-[28px]">{{ item.title }}</h1>
+
+            @if (item.description) {
+              <p class="mt-2 text-[14px] leading-7 text-muted">{{ item.description }}</p>
+            }
+
+            <!-- ===== Video lesson ===== -->
+            @if (item.type === 'video') {
+              @if (item.videoUrl) {
+                <video
+                  class="mt-5 w-full rounded-[18px] bg-black"
+                  controls
+                  playsinline
+                  preload="metadata"
+                  [src]="item.videoUrl"
+                ></video>
+              } @else {
+                <p class="mt-5 rounded-xl bg-bg px-4 py-3 text-[14px] text-muted">
+                  المدرّس لسه مارفعش فيديو للدرس ده.
+                </p>
+              }
+            }
+
+            <!-- ===== PDF lesson ===== -->
+            @if (item.type === 'pdf') {
+              @if (item.pdfUrl) {
+                <a
+                  [href]="item.pdfUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="mt-5 flex items-center justify-between gap-3 rounded-[18px] border border-line bg-bg px-4 py-4 transition-colors hover:border-plum/40"
+                >
+                  <span class="text-[15px] font-semibold text-ink">افتح ملف الدرس</span>
+                  <span class="text-[13px] text-muted">هيتفتح في تاب جديد</span>
+                </a>
+              } @else {
+                <p class="mt-5 rounded-xl bg-bg px-4 py-3 text-[14px] text-muted">
+                  المدرّس لسه مارفعش الملف بتاع الدرس ده.
+                </p>
+              }
+            }
+
+            <!-- ===== Written lesson ===== -->
+            @if (item.type === 'text') {
+              @if (paragraphs(item.content).length > 0) {
+                <div class="mt-5 space-y-4 text-[15px] leading-8 text-ink">
+                  @for (part of paragraphs(item.content); track $index) {
+                    <p>{{ part }}</p>
+                  }
+                </div>
+              } @else {
+                <p class="mt-5 rounded-xl bg-bg px-4 py-3 text-[14px] text-muted">
+                  المدرّس لسه مكتوبش محتوى للدرس ده.
+                </p>
+              }
+            }
+          </section>
+
+          <!-- ===== The lesson before and after this one ===== -->
+          @if (previousLesson() || nextLesson()) {
+            <nav class="mt-4 flex flex-wrap gap-3">
+              @if (previousLesson(); as previous) {
+                <a
+                  routerLink="/courses/{{ courseId }}/lessons/{{ previous.id }}"
+                  class="flex-1 basis-[240px] rounded-[18px] border border-line bg-white px-4 py-3 transition-colors hover:border-plum/40"
+                >
+                  <span class="text-[12px] text-muted">الدرس اللي فاته</span>
+                  <span class="mt-1 block text-[14px] font-semibold leading-6 text-ink">{{ previous.title }}</span>
+                </a>
+              }
+              @if (nextLesson(); as next) {
+                <a
+                  routerLink="/courses/{{ courseId }}/lessons/{{ next.id }}"
+                  class="flex-1 basis-[240px] rounded-[18px] border border-line bg-white px-4 py-3 transition-colors hover:border-plum/40"
+                >
+                  <span class="text-[12px] text-muted">الدرس اللي بعده</span>
+                  <span class="mt-1 block text-[14px] font-semibold leading-6 text-ink">{{ next.title }}</span>
+                </a>
+              }
+            </nav>
           }
         </div>
 
-        <h1 class="mt-3 text-[24px] font-bold leading-10 md:text-[28px]">{{ item.title }}</h1>
+        <!-- ===== The outline of the whole course ===== -->
+        @if (outline().length > 0) {
+          <aside class="lg:w-[300px] lg:shrink-0">
+            <div class="rounded-[22px] border border-line bg-white p-4 lg:sticky lg:top-5">
+              <p class="text-[13.5px] font-semibold">دروس الكورس</p>
 
-        @if (item.description) {
-          <p class="mt-2 text-[14px] leading-7 text-muted">{{ item.description }}</p>
-        }
-
-        <!-- ===== Video lesson ===== -->
-        @if (item.type === 'video') {
-          @if (item.videoUrl) {
-            <video
-              class="mt-5 w-full rounded-[18px] bg-black"
-              controls
-              playsinline
-              preload="metadata"
-              [src]="item.videoUrl"
-            ></video>
-          } @else {
-            <p class="mt-5 rounded-xl bg-bg px-4 py-3 text-[14px] text-muted">
-              المدرّس لسه مارفعش فيديو للدرس ده.
-            </p>
-          }
-        }
-
-        <!-- ===== PDF lesson ===== -->
-        @if (item.type === 'pdf') {
-          @if (item.pdfUrl) {
-            <a
-              [href]="item.pdfUrl"
-              target="_blank"
-              rel="noopener"
-              class="mt-5 flex items-center justify-between gap-3 rounded-[18px] border border-line bg-bg px-4 py-4 transition-colors hover:border-plum/40"
-            >
-              <span class="text-[15px] font-semibold text-ink">افتح ملف الدرس</span>
-              <span class="text-[13px] text-muted">هيتفتح في تاب جديد</span>
-            </a>
-          } @else {
-            <p class="mt-5 rounded-xl bg-bg px-4 py-3 text-[14px] text-muted">
-              المدرّس لسه مارفعش الملف بتاع الدرس ده.
-            </p>
-          }
-        }
-
-        <!-- ===== Written lesson ===== -->
-        @if (item.type === 'text') {
-          @if (paragraphs(item.content).length > 0) {
-            <div class="mt-5 space-y-4 text-[15px] leading-8 text-ink">
-              @for (part of paragraphs(item.content); track $index) {
-                <p>{{ part }}</p>
+              @for (group of outline(); track group.section.id) {
+                <div class="mt-3">
+                  <p class="text-[12px] font-medium text-muted">
+                    {{ group.section.order }}. {{ group.section.title }}
+                  </p>
+                  <ul class="mt-1.5 space-y-0.5">
+                    @for (entry of group.lessons; track entry.id) {
+                      <li>
+                        <a
+                          routerLink="/courses/{{ courseId }}/lessons/{{ entry.id }}"
+                          class="block rounded-lg px-2.5 py-1.5 text-[13px] leading-6 transition-colors"
+                          [class.bg-mint-light]="entry.id === lessonId"
+                          [class.font-semibold]="entry.id === lessonId"
+                          [class.text-mint]="entry.id === lessonId"
+                          [class.text-ink]="entry.id !== lessonId"
+                          [class.hover:bg-bg]="entry.id !== lessonId"
+                        >
+                          {{ entry.title }}
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                </div>
               }
             </div>
-          } @else {
-            <p class="mt-5 rounded-xl bg-bg px-4 py-3 text-[14px] text-muted">
-              المدرّس لسه مكتوبش محتوى للدرس ده.
-            </p>
-          }
+          </aside>
         }
-      </section>
+      </div>
     }
   </main>
 
