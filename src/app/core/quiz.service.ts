@@ -32,13 +32,24 @@ export interface AttemptQuestions {
   questions: QuizQuestion[];
 }
 
-// What the backend answers when the student starts an exam:
-// started (a new attempt), resumed (an attempt he did not finish), or finished (already graded).
-export interface StartResponse {
-  kind: 'started' | 'resumed' | 'finished';
-  attempt?: { id: number };
-  answers?: { questionId: number; choiceId: number }[];
-  result?: QuizResult;
+// What the backend answers when the student starts an exam.
+// Usually it sends the open attempt (new or resumed). If he already finished it,
+// it sends the result instead, and the page shows the score straight away.
+export type StartResponse = AttemptInfo | QuizResult;
+
+export interface AttemptInfo {
+  attemptId: number;
+  quizId: number;
+  startedAt: string;
+  expiresAt: string;
+  serverNow: string;
+  resumed: boolean; // true when he had an attempt already open
+  answers: { questionId: number; choiceId: number }[]; // the answers he saved before
+}
+
+// Is this answer the finished result, or the attempt we can continue?
+export function isFinishedResult(answer: StartResponse): answer is QuizResult {
+  return 'submitted' in answer && answer.submitted === true;
 }
 
 export interface QuizResult {
