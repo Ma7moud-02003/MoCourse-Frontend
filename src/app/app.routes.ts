@@ -46,6 +46,19 @@ export const routes: Routes = [
     loadComponent: () => import('./teacher/course-form/course-form').then((m) => m.CourseForm),
   },
   {
+    // a teacher changes a course he already has (same form as a new course)
+    path: 'teacher/courses/:id/edit',
+    canActivate: [authGuard],
+    loadComponent: () => import('./teacher/course-form/course-form').then((m) => m.CourseForm),
+  },
+  {
+    // the students who joined one of his courses
+    path: 'teacher/courses/:id/students',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./teacher/course-students/course-students').then((m) => m.CourseStudents),
+  },
+  {
     // a teacher adds sections and lessons to his course
     path: 'teacher/courses/:id/content',
     canActivate: [authGuard],
