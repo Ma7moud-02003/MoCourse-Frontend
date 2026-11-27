@@ -38,7 +38,7 @@ export class Login {
 
     // Send email + password. On success we go to the home page.
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => this.router.navigateByUrl('/home'),
+      next: () => this.router.navigateByUrl('/courses'),
       error: (err: HttpErrorResponse) => {
         this.serverError.set(errorMessage(err));
         this.loading.set(false);
