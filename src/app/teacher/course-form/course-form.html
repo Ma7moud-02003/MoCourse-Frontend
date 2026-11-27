@@ -1,180 +1,386 @@
 <div class="flex min-h-dvh flex-col">
   <app-header />
 
-  <main class="mx-auto w-full max-w-[860px] flex-1 px-5 pb-16">
-    <a
-      routerLink="/teacher"
-      class="mt-5 inline-flex items-center gap-2 rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-medium text-ink transition-colors hover:border-plum/40 hover:text-plum"
-    >
-      <svg
-        aria-hidden="true"
-        width="15"
-        height="15"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M9 6l6 6-6 6" />
-      </svg>
-      رجوع للوحة المدرّس
-    </a>
+  <main class="mx-auto w-full max-w-[1000px] flex-1 px-5 pb-16">
+    <p class="mt-5 text-[12.5px] text-muted">
+      <a routerLink="/teacher" class="hover:text-plum">الرئيسية</a> ‹
+      {{ courseId === null ? 'كورس جديد' : 'تعديل الكورس' }}
+    </p>
+    <h1 class="mt-2 text-[26px] font-bold leading-10">
+      {{ courseId === null ? 'كورس جديد' : 'تعديل الكورس' }}
+    </h1>
+    <p class="mt-1 text-[13.5px] leading-7 text-muted">
+      ابدأ بالأساسيات، وبعدين هتضيف الدروس. اتأكد من كل خطوة وبعدين احفظ.
+    </p>
 
-    <section class="mt-4 rounded-[22px] border border-line bg-white p-5 md:p-6">
-      <h1 class="text-[21px] font-bold leading-9">{{ courseId === null ? 'كورس جديد' : 'تعديل الكورس' }}</h1>
-      <p class="mt-1 text-[13.5px] leading-7 text-muted">
-        @if (courseId === null) {
-          اكتب بيانات الكورس، وبعد ما تحفظ هتقدر تضيف أقسام ودروس وامتحانات من لوحة المدرّس.
-        } @else {
-          غيّر اللي عايزه واحفظ. لو مغيّرتش الصورة هتفضل زي ما هي.
+    <div class="mt-5 grid gap-5 lg:grid-cols-[1fr_290px] lg:items-start">
+      <!-- The six steps -->
+      <div class="space-y-4">
+        <section class="rounded-[22px] border border-line bg-white p-5 md:p-6">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-[17px] font-bold">الأساسيات</h2>
+            <span
+              class="flex size-7 items-center justify-center rounded-full bg-plum text-[13px] font-bold text-white"
+              >1</span
+            >
+          </div>
+          <p class="mt-1 text-[13px] text-muted">
+            اسم واضح ووصف بسيط يخلّوا الطالب يفهم هو هياخد إيه.
+          </p>
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <label class="block md:col-span-2">
+              <span class="text-[13px] font-medium">اسم الكورس</span>
+              <input
+                type="text"
+                [value]="title()"
+                (input)="title.set($any($event.target).value)"
+                placeholder="مثال: أساسيات البرمجة بلغة بايثون"
+                class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+              />
+              <span class="mt-1 block text-[11.5px] text-muted"
+                >من 5 إلى 150 حرف · {{ title().length }}</span
+              >
+            </label>
+
+            <label class="block">
+              <span class="text-[13px] font-medium">التصنيف</span>
+              <select
+                [value]="categoryId() ?? ''"
+                (change)="categoryId.set(+$any($event.target).value)"
+                class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
+              >
+                @for (category of categories(); track category.id) {
+                  <option [value]="category.id">{{ category.name }}</option>
+                }
+              </select>
+            </label>
+
+            <div>
+              <span class="text-[13px] font-medium">المستوى</span>
+              <div class="mt-1.5 flex gap-2">
+                @for (item of levels; track item.value) {
+                  <button
+                    type="button"
+                    (click)="level.set(item.value)"
+                    class="flex-1 cursor-pointer rounded-xl border-[1.5px] px-2 py-2.5 text-[13.5px] font-medium transition-colors"
+                    [class]="
+                      level() === item.value
+                        ? 'border-mint bg-mint-light text-mint'
+                        : 'border-line bg-white text-ink hover:border-plum/40'
+                    "
+                  >
+                    {{ item.label }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <label class="block md:col-span-2">
+              <span class="text-[13px] font-medium">وصف الكورس</span>
+              <textarea
+                rows="4"
+                [value]="describtion()"
+                (input)="describtion.set($any($event.target).value)"
+                placeholder="الطالب هيتعلم إيه في الكورس ده؟"
+                class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum leading-7"
+              ></textarea>
+              <span class="mt-1 block text-[11.5px] text-muted"
+                >من 20 إلى 4000 حرف · {{ describtion().length }}</span
+              >
+            </label>
+          </div>
+        </section>
+
+        <section class="rounded-[22px] border border-line bg-white p-5 md:p-6">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-[17px] font-bold">صورة الكورس</h2>
+            <span
+              class="flex size-7 items-center justify-center rounded-full bg-plum text-[13px] font-bold text-white"
+              >2</span
+            >
+          </div>
+          <p class="mt-1 text-[13px] text-muted">أول حاجة الطالب بيشوفها. اختار صورة واضحة.</p>
+          <label
+            class="mt-4 flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed px-4 py-8 text-center transition-colors"
+            [class]="dragging() ? 'border-plum bg-art' : 'border-plum/30 bg-bg'"
+            (dragover)="$event.preventDefault(); dragging.set(true)"
+            (dragleave)="dragging.set(false)"
+            (drop)="onDrop($event)"
+          >
+            @if (previewUrl() || currentThumbnail()) {
+              <img
+                [src]="previewUrl() || currentThumbnail()"
+                alt="الصورة المختارة"
+                class="h-32 rounded-xl object-cover"
+              />
+              <span class="text-[12.5px] text-mint"
+                >{{ thumbnail()?.name || 'الصورة الحالية' }} · اضغط لتغييرها</span
+              >
+            } @else {
+              <span class="text-[14px] font-semibold text-plum">اسحب الصورة هنا أو اختارها</span>
+              <span class="text-[12px] text-muted">JPG أو PNG، أقل من 5 ميجا، ونسبة 16:9 أفضل</span>
+            }
+            <input type="file" accept="image/*" (change)="onThumbnail($event)" class="sr-only" />
+          </label>
+        </section>
+
+        <section class="rounded-[22px] border border-line bg-white p-5 md:p-6">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-[17px] font-bold">السعر والمدة</h2>
+            <span
+              class="flex size-7 items-center justify-center rounded-full bg-plum text-[13px] font-bold text-white"
+              >3</span
+            >
+          </div>
+          <p class="mt-1 text-[13px] text-muted">الدفع بيتم بتحويل مباشر ليك، وإنت اللي بتأكده.</p>
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <label class="block">
+              <span class="text-[13px] font-medium">السعر (جنيه)</span>
+              <input
+                type="number"
+                min="100"
+                max="10000"
+                [value]="price()"
+                (input)="price.set($any($event.target).value)"
+                placeholder="350"
+                class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+              />
+              <span class="mt-1 block text-[11.5px] text-muted">من 100 إلى 10000</span>
+            </label>
+            <label class="block">
+              <span class="text-[13px] font-medium">سعر بعد الخصم (اختياري)</span>
+              <input
+                type="number"
+                min="100"
+                max="10000"
+                [value]="discountPrice()"
+                (input)="discountPrice.set($any($event.target).value)"
+                placeholder="250"
+                class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+              />
+              <span class="mt-1 block text-[11.5px] text-muted">من 100 إلى 10000</span>
+            </label>
+            <label class="block">
+              <span class="text-[13px] font-medium">مدة الكورس</span>
+              <input
+                type="number"
+                min="5"
+                max="1000"
+                [value]="duration()"
+                (input)="duration.set($any($event.target).value)"
+                placeholder="24"
+                class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+              />
+              <span class="mt-1 block text-[11.5px] text-muted">من 5 إلى 1000</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="rounded-[22px] border border-line bg-white p-5 md:p-6">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-[17px] font-bold">هيتعلم إيه الطالب؟</h2>
+            <span
+              class="flex size-7 items-center justify-center rounded-full bg-plum text-[13px] font-bold text-white"
+              >4</span
+            >
+          </div>
+          <p class="mt-1 text-[13px] text-muted">اكتب نقاط قصيرة. لازم نقطة واحدة على الأقل.</p>
+          <div class="mt-4 space-y-2.5">
+            @for (point of covers(); track $index) {
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  [value]="point"
+                  (input)="setPoint('covers', $index, $any($event.target).value)"
+                  placeholder="مثال: تكتب أول برنامج بايثون"
+                  class="w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+                />
+                <button
+                  type="button"
+                  (click)="removePoint('covers', $index)"
+                  aria-label="امسح النقطة"
+                  class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:text-coral"
+                >
+                  ×
+                </button>
+              </div>
+            }
+          </div>
+          <button
+            type="button"
+            (click)="addPoint('covers')"
+            class="mt-3 cursor-pointer text-[13px] font-semibold text-plum"
+          >
+            + أضف نقطة
+          </button>
+        </section>
+
+        <section class="rounded-[22px] border border-line bg-white p-5 md:p-6">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-[17px] font-bold">المتطلبات</h2>
+            <span
+              class="flex size-7 items-center justify-center rounded-full bg-plum text-[13px] font-bold text-white"
+              >5</span
+            >
+          </div>
+          <p class="mt-1 text-[13px] text-muted">
+            إيه اللي الطالب محتاج يعرفه قبل ما يبدأ؟ لازم نقطة واحدة على الأقل.
+          </p>
+          <div class="mt-4 space-y-2.5">
+            @for (point of requirements(); track $index) {
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  [value]="point"
+                  (input)="setPoint('requirements', $index, $any($event.target).value)"
+                  placeholder="مثال: جهاز كمبيوتر أو موبايل"
+                  class="w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+                />
+                <button
+                  type="button"
+                  (click)="removePoint('requirements', $index)"
+                  aria-label="امسح النقطة"
+                  class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:text-coral"
+                >
+                  ×
+                </button>
+              </div>
+            }
+          </div>
+          <button
+            type="button"
+            (click)="addPoint('requirements')"
+            class="mt-3 cursor-pointer text-[13px] font-semibold text-plum"
+          >
+            + أضف متطلب
+          </button>
+        </section>
+
+        <section class="rounded-[22px] border border-line bg-white p-5 md:p-6">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-[17px] font-bold">النشر</h2>
+            <span
+              class="flex size-7 items-center justify-center rounded-full bg-plum text-[13px] font-bold text-white"
+              >6</span
+            >
+          </div>
+          <p class="mt-1 text-[13px] text-muted">تقدر تحفظه مسودة وتكمله بعدين.</p>
+          @if (courseId !== null) {
+            <label
+              class="mt-4 flex cursor-pointer items-center justify-between gap-3 rounded-xl bg-bg px-4 py-3.5"
+            >
+              <span>
+                <span class="block text-[14px] font-semibold">انشر الكورس دلوقتي</span>
+                <span class="block text-[12px] text-muted">الطلاب هيشوفوه ويقدروا يشتروه.</span>
+              </span>
+              <input
+                type="checkbox"
+                role="switch"
+                class="h-6 w-11 shrink-0 cursor-pointer accent-[#2fb58c]"
+                [checked]="published()"
+                (change)="published.set($any($event.target).checked)"
+              />
+            </label>
+          } @else {
+            <p class="mt-4 rounded-xl bg-bg px-4 py-3.5 text-[13px] leading-7 text-muted">
+              اختار تحت: "إنشاء ونشر" يظهر للطلاب فورًا، و"حفظ كمسودة" يفضل مخفي لحد ما تنشره.
+            </p>
+          }
+        </section>
+
+        @if (errorText()) {
+          <p class="rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink">
+            {{ errorText() }}
+          </p>
         }
-      </p>
 
-      <div class="mt-5 grid gap-4 md:grid-cols-2">
-        <label class="block md:col-span-2">
-          <span class="text-[13px] font-medium">اسم الكورس</span>
-          <input
-            type="text"
-            [value]="title()"
-            (input)="title.set($any($event.target).value)"
-            placeholder="مثال: أساسيات البرمجة بلغة بايثون"
-            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
-          />
-        </label>
-
-        <label class="block md:col-span-2">
-          <span class="text-[13px] font-medium">وصف الكورس</span>
-          <textarea
-            rows="4"
-            [value]="describtion()"
-            (input)="describtion.set($any($event.target).value)"
-            placeholder="الطالب هيتعلم إيه في الكورس ده؟"
-            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none placeholder:text-muted/70 focus:border-plum"
-          ></textarea>
-        </label>
-
-        <label class="block">
-          <span class="text-[13px] font-medium">القسم</span>
-          <select
-            [value]="categoryId() ?? ''"
-            (change)="categoryId.set(+$any($event.target).value)"
-            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
-          >
-            @for (category of categories(); track category.id) {
-              <option [value]="category.id">{{ category.name }}</option>
-            }
-          </select>
-        </label>
-
-        <label class="block">
-          <span class="text-[13px] font-medium">المستوى</span>
-          <select
-            [value]="level()"
-            (change)="level.set($any($event.target).value)"
-            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
-          >
-            @for (item of levels; track item.value) {
-              <option [value]="item.value">{{ item.label }}</option>
-            }
-          </select>
-        </label>
-
-        <label class="block">
-          <span class="text-[13px] font-medium">السعر (بالجنيه)</span>
-          <input
-            type="number"
-            min="100"
-            max="10000"
-            [value]="price()"
-            (input)="price.set($any($event.target).value)"
-            placeholder="350"
-            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
-          />
-        </label>
-
-        <label class="block">
-          <span class="text-[13px] font-medium">سعر بعد الخصم (اختياري)</span>
-          <input
-            type="number"
-            min="100"
-            max="10000"
-            [value]="discountPrice()"
-            (input)="discountPrice.set($any($event.target).value)"
-            placeholder="199"
-            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
-          />
-        </label>
-
-        <label class="block">
-          <span class="text-[13px] font-medium">مدة الكورس</span>
-          <input
-            type="number"
-            min="5"
-            max="1000"
-            [value]="duration()"
-            (input)="duration.set($any($event.target).value)"
-            placeholder="180"
-            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
-          />
-        </label>
-
-        <label class="block md:col-span-2">
-          <span class="text-[13px] font-medium">هتتعلم إيه (كل نقطة في سطر)</span>
-          <textarea
-            rows="3"
-            [value]="covers()"
-            (input)="covers.set($any($event.target).value)"
-            placeholder="تكتب أول برنامج بايثون&#10;تفهم المتغيرات والشروط"
-            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none placeholder:text-muted/70 focus:border-plum"
-          ></textarea>
-        </label>
-
-        <label class="block md:col-span-2">
-          <span class="text-[13px] font-medium">محتاج تعرف قبل ما تبدأ (كل نقطة في سطر)</span>
-          <textarea
-            rows="3"
-            [value]="requirements()"
-            (input)="requirements.set($any($event.target).value)"
-            placeholder="جهاز كمبيوتر أو موبايل&#10;الرغبة في التعلم"
-            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] leading-7 outline-none placeholder:text-muted/70 focus:border-plum"
-          ></textarea>
-        </label>
-
-        <label class="block md:col-span-2">
-          <span class="text-[13px] font-medium">صورة الكورس</span>
-          @if (currentThumbnail()) {
-            <img [src]="currentThumbnail()" alt="صورة الكورس الحالية" class="mt-2 h-24 rounded-xl object-cover" />
+        <div class="flex flex-wrap gap-3">
+          @if (courseId === null) {
+            <button
+              type="button"
+              (click)="save('publish')"
+              [disabled]="saving()"
+              class="flex-1 cursor-pointer rounded-full bg-mint px-6 py-3 text-[14px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {{ saveKind() === 'publish' ? 'بنحفظ...' : 'إنشاء ونشر الكورس' }}
+            </button>
+            <button
+              type="button"
+              (click)="save('draft')"
+              [disabled]="saving()"
+              class="flex-1 cursor-pointer rounded-full border-[1.5px] border-plum bg-white px-6 py-3 text-[14px] font-semibold text-plum transition-colors hover:bg-art disabled:opacity-60"
+            >
+              {{ saveKind() === 'draft' ? 'بنحفظ...' : 'حفظ كمسودة' }}
+            </button>
+          } @else {
+            <button
+              type="button"
+              (click)="save('publish')"
+              [disabled]="saving()"
+              class="flex-1 cursor-pointer rounded-full bg-plum px-6 py-3 text-[14px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
+            >
+              {{ saving() ? 'بنحفظ...' : 'احفظ التعديلات' }}
+            </button>
+            <a
+              routerLink="/teacher"
+              class="flex-1 rounded-full border-[1.5px] border-line px-6 py-3 text-center text-[14px] font-semibold text-muted hover:text-plum"
+              >إلغاء</a
+            >
           }
-          <input
-            type="file"
-            accept="image/*"
-            (change)="onThumbnail($event)"
-            class="mt-1.5 w-full cursor-pointer rounded-xl border-[1.5px] border-line bg-white px-3 py-2.5 text-[13px] text-muted file:me-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-art file:px-3 file:py-1.5 file:text-[12.5px] file:font-medium file:text-plum"
-          />
-          @if (thumbnail(); as file) {
-            <span class="mt-1.5 block text-[12px] text-mint">اخترت: {{ file.name }}</span>
-          }
-        </label>
+        </div>
       </div>
 
-      @if (errorText()) {
-        <p class="mt-4 rounded-xl bg-alert-bg px-4 py-3 text-[13px] leading-7 text-alert-ink">{{ errorText() }}</p>
-      }
+      <!-- Side: live preview (desktop) and the progress card -->
+      <aside class="order-first space-y-4 lg:sticky lg:top-20 lg:order-none">
+        <div class="hidden lg:block">
+          <p class="mb-2 text-[12px] text-muted">كده هيظهر للطالب</p>
+          <div class="overflow-hidden rounded-[22px] border border-line bg-white">
+            @if (previewUrl() || currentThumbnail()) {
+              <img
+                [src]="previewUrl() || currentThumbnail()"
+                alt=""
+                class="aspect-video w-full object-cover"
+              />
+            } @else {
+              <div class="aspect-video w-full bg-art"></div>
+            }
+            <div class="p-4">
+              <p class="text-[12px] text-plum">{{ categoryName() || 'التصنيف' }}</p>
+              <p class="mt-1 text-[15px] font-bold leading-7">{{ title() || 'اسم الكورس' }}</p>
+              <p class="mt-1 text-[15px] font-bold">
+                {{ shownPrice() || 0 }} ج.م
+                @if (discountPrice() && Number(discountPrice()) > 0) {
+                  <span class="ms-1 text-[12px] font-normal text-muted line-through">{{
+                    price()
+                  }}</span>
+                }
+              </p>
+            </div>
+          </div>
+        </div>
 
-      <div class="mt-5 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          (click)="save()"
-          [disabled]="saving()"
-          class="cursor-pointer rounded-full bg-plum px-6 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-plum-dark disabled:opacity-60"
-        >
-          {{ saving() ? 'بنحفظ الكورس...' : courseId === null ? 'احفظ الكورس' : 'احفظ التعديلات' }}
-        </button>
-        <a routerLink="/teacher" class="text-[13.5px] font-medium text-muted hover:text-plum">إلغاء</a>
-      </div>
-    </section>
+        <div class="rounded-[22px] border border-line bg-white p-5">
+          <p class="text-[14px] font-bold">جاهز بنسبة {{ percent() }}%</p>
+          <div class="mt-2 h-2 overflow-hidden rounded-full bg-art">
+            <div
+              class="h-full rounded-full bg-mint transition-all"
+              [style.width.%]="percent()"
+            ></div>
+          </div>
+          <ul class="mt-3 space-y-1.5 text-[13px]">
+            @for (check of checks(); track check.label) {
+              <li [class]="check.done ? 'text-mint font-medium' : 'text-muted'">
+                {{ check.done ? '✓' : '○' }} {{ check.label }}
+              </li>
+            }
+          </ul>
+        </div>
+
+        <p class="rounded-[22px] bg-mint-light p-4 text-[13px] leading-7 text-mint">
+          بعد الإنشاء هتضيف الأقسام والدروس. أول درس هو أصعب خطوة، وبعدها بتمشي.
+        </p>
+      </aside>
+    </div>
   </main>
 
   <app-footer />
