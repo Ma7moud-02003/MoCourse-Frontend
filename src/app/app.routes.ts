@@ -78,6 +78,13 @@ export const routes: Routes = [
     loadComponent: () => import('./teacher/teacher-home').then((m) => m.TeacherHome),
   },
   {
+    // the teacher's numbers and what happened lately
+    path: 'teacher/dashboard',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./teacher/teacher-dashboard/teacher-dashboard').then((m) => m.TeacherDashboard),
+  },
+  {
     // a teacher opens a new course
     path: 'teacher/courses/new',
     canActivate: [authGuard],
