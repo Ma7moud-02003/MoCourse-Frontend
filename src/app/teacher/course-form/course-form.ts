@@ -1,13 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Category, CourseLevel, CourseService } from '../../core/course.service';
 import { errorMessage } from '../../core/error-message';
 import { AppFooter } from '../../layout/app-footer/app-footer';
 import { AppHeader } from '../../layout/app-header/app-header';
 
-// A teacher opening a new course: the details, the price, what the student will learn,
-// what he needs, and one picture for the course card.
+// A teacher opening a new course, or changing one he already has (the address has an id).
+// The details, the price, what the student will learn, what he needs, and one picture for the course card.
 @Component({
   selector: 'app-course-form',
   imports: [RouterLink, AppHeader, AppFooter],
@@ -16,6 +16,10 @@ import { AppHeader } from '../../layout/app-header/app-header';
 export class CourseForm implements OnInit {
   private courses = inject(CourseService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  // set when we are editing a course; null when we open a new one
+  courseId: number | null = null;
 
   categories = signal<Category[]>([]);
   saving = signal(false);
@@ -35,6 +39,7 @@ export class CourseForm implements OnInit {
   covers = signal('');
   requirements = signal('');
   thumbnail = signal<File | null>(null);
+  currentThumbnail = signal(''); // the picture the course has now, when editing
 
   readonly levels: { value: CourseLevel; label: string }[] = [
     { value: 'beginner', label: 'مبتدئ' },
@@ -43,13 +48,37 @@ export class CourseForm implements OnInit {
   ];
 
   ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.courseId = Number(id);
+      this.fillFromCourse(this.courseId);
+    }
     this.courses.categories().subscribe({
       next: (list) => {
         this.categories.set(list);
         // pick the first category, so he does not have to, and the field is never empty
-        if (list.length > 0) this.categoryId.set(list[0].id);
+        if (list.length > 0 && this.categoryId() === null) this.categoryId.set(list[0].id);
       },
       error: () => this.categories.set([]),
+    });
+  }
+
+  // Editing: put the course's current values in the fields.
+  private fillFromCourse(id: number) {
+    this.courses.details(id).subscribe({
+      next: (course) => {
+        this.title.set(course.title);
+        this.describtion.set(course.describtion);
+        this.price.set(String(course.price));
+        this.discountPrice.set(course.discountPrice ? String(course.discountPrice) : '');
+        this.duration.set(String(course.duration));
+        this.level.set(course.level);
+        if (course.category?.id) this.categoryId.set(course.category.id);
+        this.covers.set(course.covers.join('\n'));
+        this.requirements.set(course.requirements.join('\n'));
+        this.currentThumbnail.set(course.thumbnail);
+      },
+      error: () => this.errorText.set('مقدرناش نحمّل بيانات الكورس. تأكد إنه بتاعك وجرّب تاني.'),
     });
   }
 
@@ -92,35 +121,35 @@ export class CourseForm implements OnInit {
     this.errorText.set('');
     this.saving.set(true);
 
-    const thumbnail = this.thumbnail() as File;
     const discount = Number(this.discountPrice());
+    const fields = {
+      title: this.title().trim(),
+      describtion: this.describtion().trim(),
+      price: Number(this.price()),
+      discountPrice: discount > 0 ? discount : null,
+      duration: Number(this.duration()),
+      level: this.level(),
+      categoryId: this.categoryId() as number,
+      covers: this.lines(this.covers()),
+      requirements: this.lines(this.requirements()),
+    };
 
-    this.courses
-      .create(
-        {
-          title: this.title().trim(),
-          describtion: this.describtion().trim(),
-          price: Number(this.price()),
-          discountPrice: discount > 0 ? discount : null,
-          duration: Number(this.duration()),
-          level: this.level(),
-          categoryId: this.categoryId() as number,
-          covers: this.lines(this.covers()),
-          requirements: this.lines(this.requirements()),
-        },
-        thumbnail,
-      )
-      .subscribe({
-        next: (course) => {
-          this.saving.set(false);
-          // straight to the new course, so he sees what the student will see
-          this.router.navigate(['/courses', course.id]);
-        },
-        error: (err: HttpErrorResponse) => {
-          this.saving.set(false);
-          this.errorText.set(this.saveError(err));
-        },
-      });
+    const request =
+      this.courseId === null
+        ? this.courses.create(fields, this.thumbnail() as File)
+        : this.courses.update(this.courseId, fields, this.thumbnail());
+
+    request.subscribe({
+      next: (course) => {
+        this.saving.set(false);
+        // straight to the course page, so he sees what the student will see
+        this.router.navigate(['/courses', this.courseId ?? course.id]);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.saving.set(false);
+        this.errorText.set(this.saveError(err));
+      },
+    });
   }
 
   // One clear sentence about the first thing that is missing or out of range.
@@ -145,7 +174,8 @@ export class CourseForm implements OnInit {
     if (this.categoryId() === null) return 'اختار القسم اللي الكورس بيتبعه.';
     if (this.lines(this.covers()).length === 0) return 'اكتب نقطة واحدة على الأقل في "هتتعلم إيه".';
     if (this.lines(this.requirements()).length === 0) return 'اكتب نقطة واحدة على الأقل في "محتاج تعرف قبل ما تبدأ".';
-    if (!this.thumbnail()) return 'اختار صورة للكورس.';
+    // a new course needs a picture; an old one already has one
+    if (!this.thumbnail() && this.courseId === null) return 'اختار صورة للكورس.';
 
     return '';
   }
