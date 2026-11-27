@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { NotificationService } from '../../core/notification.service';
+import { TeacherService } from '../../core/teacher.service';
 import { Profile, UserService } from '../../core/user.service';
 
 // One link of the side menu (desktop) and of the bottom tabs (phone).
@@ -10,6 +11,7 @@ interface NavItem {
   path: string;
   icon: string; // the "d" of a simple line icon
   exact?: boolean;
+  badge?: boolean; // shows how many requests are waiting
 }
 
 const ICONS = {
@@ -17,6 +19,9 @@ const ICONS = {
   browse: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM15.5 8.5l-2 5-5 2 2-5z',
   courses: 'M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2zM4 20a2 2 0 0 0 2 2h13v-4',
   certificate: 'M12 3a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM8.5 14L7 22l5-3 5 3-1.5-8',
+  requests: 'M4 6h16v12H4zM4 9h16M8 14h4',
+  students: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20c0-3 3-5 6-5s6 2 6 5M16 11a3 3 0 1 0 0-6M18 15c2 .5 3 2 3 5',
+  wallet: 'M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7l12-3v3M16 13h3',
   profile: 'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4 21c0-4 4-6 8-6s8 2 8 6',
 };
 
@@ -30,6 +35,9 @@ const STUDENT_LINKS: NavItem[] = [
 
 const TEACHER_LINKS: NavItem[] = [
   { label: 'الرئيسية', path: '/teacher', icon: ICONS.home, exact: true },
+  { label: 'الطلبات', path: '/teacher/requests', icon: ICONS.requests, badge: true },
+  { label: 'طلابي', path: '/teacher/students', icon: ICONS.students },
+  { label: 'الدفع', path: '/teacher/payment-info', icon: ICONS.wallet },
   { label: 'حسابي', path: '/profile', icon: ICONS.profile },
 ];
 
@@ -122,6 +130,9 @@ const TEACHER_LINKS: NavItem[] = [
             <path [attr.d]="item.icon" />
           </svg>
           {{ item.label }}
+          @if (item.badge && waiting() > 0) {
+            <span class="ms-auto rounded-full bg-coral px-1.5 text-[11px] font-bold leading-[18px] text-white">{{ waiting() }}</span>
+          }
         </a>
       }
     </nav>
@@ -136,8 +147,11 @@ const TEACHER_LINKS: NavItem[] = [
           [routerLink]="item.path"
           routerLinkActive="text-plum"
           [routerLinkActiveOptions]="{ exact: !!item.exact }"
-          class="flex flex-1 flex-col items-center gap-1 px-1 pb-2 pt-2.5 text-[11px] font-medium text-muted"
+          class="relative flex flex-1 flex-col items-center gap-1 px-1 pb-2 pt-2.5 text-[11px] font-medium text-muted"
         >
+          @if (item.badge && waiting() > 0) {
+            <span class="absolute end-[22%] top-1.5 rounded-full bg-coral px-1 text-[10px] font-bold leading-[16px] text-white">{{ waiting() }}</span>
+          }
           <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path [attr.d]="item.icon" />
           </svg>
@@ -151,8 +165,11 @@ export class AppHeader implements OnInit, OnDestroy {
   auth = inject(AuthService);
   notifications = inject(NotificationService);
   private user = inject(UserService);
+  private teacher = inject(TeacherService);
 
   me = signal<Profile | null>(null);
+  // how many join requests wait for the teacher (the badge on the menu)
+  waiting = signal(0);
   links = computed(() => (this.auth.role() === 'student' ? STUDENT_LINKS : TEACHER_LINKS));
   roleLabel = computed(() => (this.auth.role() === 'student' ? 'طالب' : 'مدرّس'));
 
@@ -161,6 +178,12 @@ export class AppHeader implements OnInit, OnDestroy {
     document.body.classList.add('has-shell');
     // Ask once how many notifications are unread each time a page with this header opens.
     this.notifications.refreshUnread();
+    if (this.auth.role() !== 'student') {
+      this.teacher.joinRequests('WAITING_APPROVAL').subscribe({
+        next: (list) => this.waiting.set(list.length),
+        error: () => undefined,
+      });
+    }
     this.user.me().subscribe({ next: (r) => this.me.set(r.personalInfo), error: () => undefined });
   }
 
