@@ -73,11 +73,23 @@
             class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-plum"
           />
         </label>
+
+        <label class="block">
+          <span class="text-[13px] font-medium">مدة الامتحان لكل طالب بالدقايق (اختياري)</span>
+          <input
+            type="number"
+            min="1"
+            [value]="timeLimit()"
+            (input)="timeLimit.set($any($event.target).value)"
+            placeholder="مثال: 30"
+            class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2.5 text-[14px] outline-none placeholder:text-muted/70 focus:border-plum"
+          />
+        </label>
       </div>
 
       <p class="mt-3 text-[12.5px] leading-6 text-muted">
-        ملحوظة: السيرفر مبيحسبش مدة لكل طالب. القفل بيحصل للكل في نفس الوقت، ووقت القفل هو آخر ميعاد
-        للتسليم.
+        مدة الامتحان بتبدأ لكل طالب من لحظة ما يدخل الامتحان، ومبتعدّيش وقت القفل. لو سيبتها فاضية،
+        الطالب ياخد وقت الامتحان كله لحد القفل.
       </p>
 
       @if (examError()) {
@@ -110,7 +122,7 @@
                 <p class="truncate text-[14px] font-semibold">{{ exam.title }}</p>
                 <p class="mt-0.5 text-[12.5px] text-muted">
                   {{ exam.isPublished ? 'منشور' : 'مسودة' }} · من {{ when(exam.opensAt) }} لحد
-                  {{ when(exam.closesAt) }} · {{ exam.totalMarks }} درجة
+                  {{ when(exam.closesAt) }} · {{ exam.totalMarks }} درجة · {{ exam.timeLimit }} دقيقة
                 </p>
               </div>
               <button
@@ -156,6 +168,30 @@
             الامتحان منشور، والأسئلة مبقتش تتضاف. لو طالب بدأ الامتحان مفيش تعديل.
           </p>
         } @else {
+          <!-- ===== the minutes each student gets ===== -->
+          <div class="mt-4 flex flex-wrap items-end gap-3">
+            <label class="block max-w-[260px]">
+              <span class="text-[13px] font-medium">المدة الحالية {{ exam.timeLimit }} دقيقة. تغيّرها لـ</span>
+              <input
+                type="number"
+                min="1"
+                [value]="newLimit()"
+                (input)="newLimit.set($any($event.target).value)"
+                class="mt-1.5 w-full rounded-xl border-[1.5px] border-line bg-white px-3.5 py-2 text-[14px] outline-none focus:border-plum"
+              />
+            </label>
+            <button
+              type="button"
+              (click)="saveTimeLimit()"
+              class="cursor-pointer rounded-full border border-line px-4 py-2 text-[13px] font-medium transition-colors hover:border-plum/40 hover:text-plum"
+            >
+              احفظ المدة
+            </button>
+          </div>
+          @if (limitError()) {
+            <p class="mt-2 text-[13px] text-red-700" role="alert">{{ limitError() }}</p>
+          }
+
           <!-- ===== new question ===== -->
           <div class="mt-4 grid gap-3 rounded-2xl border border-line p-4">
             <h3 class="text-[14.5px] font-bold">سؤال جديد</h3>
