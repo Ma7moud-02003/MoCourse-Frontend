@@ -1,0 +1,150 @@
+<div class="flex min-h-dvh flex-col">
+  <app-header />
+
+  <main class="mx-auto w-full max-w-[1000px] flex-1 px-5 pb-16">
+    <p class="mt-6 text-[12px] text-muted">الرئيسية ‹ تقييماتي</p>
+    <h1 class="mt-2 text-[26px] font-bold leading-10">تقييماتي</h1>
+    <p class="text-[14px] text-muted">رأيك بيساعد طلاب تانيين يختاروا.</p>
+
+    @if (loading()) {
+      <p
+        class="mt-5 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted"
+      >
+        بنجيب تقييماتك...
+      </p>
+    } @else if (error()) {
+      <p
+        class="mt-5 rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[15px] text-ink"
+      >
+        {{ error() }}
+      </p>
+    } @else {
+      <div class="mt-5 grid gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
+        <!-- the form: first in the code so it shows first on a phone, on the left on desktop -->
+        <section class="rounded-[22px] border border-line bg-white p-5 lg:order-2">
+          <h2 class="text-[16px] font-bold">
+            {{ editingId() === null ? 'قيّمي كورس جديد' : 'عدّل تقييمك' }}
+          </h2>
+          <p class="mt-1 text-[12px] text-muted">تقدر تقيّم الكورسات اللي انت مشترك فيها بس.</p>
+
+          @if (editingId() === null && courses().length === 0) {
+            <p class="mt-4 rounded-[14px] bg-bg px-4 py-3 text-[13px] text-muted">
+              مفيش كورس جديد تقيّمه دلوقتي.
+              <a routerLink="/courses" class="font-semibold text-plum">تصفّح الكورسات</a>
+            </p>
+          } @else {
+            @if (editingId() === null) {
+              <select
+                [value]="courseId()"
+                (change)="onCourse($event)"
+                aria-label="الكورس"
+                class="mt-4 w-full rounded-[14px] border border-line bg-white px-4 py-3 text-[14px]"
+              >
+                <option value="0">اختار الكورس</option>
+                @for (course of courses(); track course.id) {
+                  <option [value]="course.id">{{ course.title }}</option>
+                }
+              </select>
+            }
+
+            <div class="mt-4 flex gap-1" role="group" aria-label="التقييم">
+              @for (star of stars; track star) {
+                <button
+                  type="button"
+                  (click)="rating.set(star)"
+                  [attr.aria-label]="star + ' نجوم'"
+                  class="cursor-pointer text-[26px] leading-none"
+                  [class]="star <= rating() ? 'text-[#d9a82b]' : 'text-line'"
+                >
+                  ★
+                </button>
+              }
+            </div>
+
+            <textarea
+              [value]="comment()"
+              (input)="onComment($event)"
+              [attr.maxlength]="maxLength"
+              rows="4"
+              placeholder="اكتبي رأيك هنا"
+              class="mt-3 w-full rounded-[14px] border border-line px-4 py-3 text-[14px]"
+            ></textarea>
+            <p class="mt-1 text-[11px] text-muted">
+              التعليق من 5 لـ 200 حرف ({{ comment().length }})
+            </p>
+
+            @if (formError()) {
+              <p role="alert" class="mt-3 text-[13px] text-[#b3261e]">{{ formError() }}</p>
+            }
+
+            <button
+              type="button"
+              (click)="send()"
+              [disabled]="sending()"
+              class="mt-4 w-full cursor-pointer rounded-full bg-mint py-3 text-[14px] font-bold text-white disabled:opacity-60"
+            >
+              {{ sending() ? 'بنحفظ...' : editingId() === null ? 'نشر التقييم' : 'حفظ التعديل' }}
+            </button>
+            @if (editingId() !== null) {
+              <button
+                type="button"
+                (click)="cancelEdit()"
+                class="mt-2 w-full cursor-pointer rounded-full border border-line py-3 text-[14px] font-medium"
+              >
+                إلغاء
+              </button>
+            }
+          }
+        </section>
+
+        <!-- his reviews -->
+        <section class="flex flex-col gap-4 lg:order-1">
+          @if (reviews().length === 0) {
+            <p
+              class="rounded-[22px] border border-line bg-white px-5 py-10 text-center text-[14px] text-muted"
+            >
+              لسه ما كتبتش أي تقييم.
+            </p>
+          }
+          @for (review of reviews(); track review.id) {
+            <article class="rounded-[22px] border border-line bg-white p-5">
+              <a
+                [routerLink]="['/courses', review.courseId]"
+                class="text-[16px] font-bold hover:text-plum"
+              >
+                {{ review.courseTitle }}
+              </a>
+              <p class="mt-1 text-[12px] text-muted">تقييمك · {{ day(review.createdAt) }}</p>
+              <p
+                class="mt-3 text-[18px] tracking-wider text-[#d9a82b]"
+                [attr.aria-label]="review.rateing + ' من 5'"
+              >
+                {{ '★'.repeat(review.rateing)
+                }}<span class="text-line">{{ '★'.repeat(5 - review.rateing) }}</span>
+              </p>
+              <p class="mt-3 rounded-[14px] bg-bg px-4 py-3 text-[14px]">{{ review.comment }}</p>
+              <div class="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  (click)="edit(review)"
+                  class="cursor-pointer rounded-full border border-line px-5 py-1.5 text-[13px] font-medium text-plum"
+                >
+                  تعديل
+                </button>
+                <button
+                  type="button"
+                  (click)="remove(review)"
+                  class="cursor-pointer rounded-full border border-[#e3a9a9] px-5 py-1.5 text-[13px] font-medium text-[#b3261e]"
+                >
+                  مسح
+                </button>
+              </div>
+            </article>
+          }
+        </section>
+      </div>
+    }
+  </main>
+
+  <app-footer />
+  </div>
